@@ -1,0 +1,11 @@
+seaborn
+matplotlib
+scipy
+psutil
+pandas
+numpy
+requests
+wheel
+dash
+dash_bootstrap_components
+alpaca-trade-api

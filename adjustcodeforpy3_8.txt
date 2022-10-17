@@ -1,0 +1,7 @@
+servernotes
+to getstockdata() change to
+readcsv(daterangedb_name, DATE_RESULTS)
+
+tickerportalbot
+add , daterangedb_name, DATE_RESULTS
+replace with readcsv(daterangedb_name, DATE_RESULTS)# for all_startdates in tickers_possible

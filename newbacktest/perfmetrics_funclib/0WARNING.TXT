@@ -1,0 +1,3 @@
+The functions in this folder cannot be modified once added to it.  otherwise, the function database that assigns a unique id to each function won't find it if it changed it's name.
+Or, the stratcodes assigned to test samples would be attributed different codes when in fact they shoudl be the same. Other problems can occur too, like codes being identical but should be given unique codes.
+If you need to make a revision, duplicate the problematic function code, give it a unique name, that way it will be assigned a unique code by the function database.
