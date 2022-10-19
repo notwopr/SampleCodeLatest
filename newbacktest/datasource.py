@@ -16,7 +16,7 @@ class DataSource:
     _sourcelocs = {
         'eodprices': [DirPaths().eodprices, f"{FileNames().fn_pricematrix_common}.pkl"],
         'eodprices_bench': [DirPaths().eodprices, f"{FileNames().fn_pricematrix_bench}.pkl"],
-        'eodprices_commonplusbench': [DirPaths().eodprices, f"{FileNames().fn_pricematrix_commonplusbench}.pkl"],
+        # 'eodprices_commonplusbench': [DirPaths().eodprices, f"{FileNames().fn_pricematrix_commonplusbench}.pkl"],
         'fundies': [None, None],
         'marketcap': [None, None]
     }
@@ -25,6 +25,6 @@ class DataSource:
         if datasourcetype == 'eodprices' or datasourcetype == 'eodprices_bench':
             return readpkl_fullpath(Path(join_str(self._sourcelocs[datasourcetype])))
         elif datasourcetype == 'eodprices_commonplusbench':
-            stockdf = readpkl_fullpath(Path(join_str(self._sourcelocs[datasourcetype])))
+            stockdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices'])))
             benchdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices_bench'])))
             return DataFrameOperations().join_matrices('date', [benchdf, stockdf])

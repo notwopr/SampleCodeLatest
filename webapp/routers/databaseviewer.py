@@ -10,12 +10,9 @@ Purpose:  .
 """
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
-import json
-import simplejson
 #   THIRD PARTY IMPORTS
-import dash
-from dash import dcc, html, callback_context
-from dash.dependencies import Input, Output, State
+from dash import html
+from dash.dependencies import Input, Output
 from dashappobject import app
 #   LOCAL APPLICATION IMPORTS
 from ..botclasses import BotParams
@@ -23,9 +20,9 @@ from ..botclasses import BotParams
 # from Modules.price_history import grabsinglehistory
 from ..os_functions import get_currentscript_filename
 # from ..common_resources import tickers
-from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
-from newbacktest.perfmetrics.perfmetrics_perfprofileupdater import PerfProfileUpdater
+from ..dashinputs import dash_inputbuilder
 from newbacktest.module_operations import ModuleOperations
+from ..html_json import jsontodash, remove_nonrenderables, stratpool_stratcodelevel
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -49,8 +46,9 @@ layout = html.Div([
         'searchable': False,
         'clearable': False
         }),
-    html.Span([html.B('Database Name:'), html.Div(id=f'databasename_{bp.botid}')]),
-    html.Span(html.B('Top level Keys:')),
+    html.P([html.B('Database Name:'), html.Div(id=f'databasename_{bp.botid}')]),
+    html.P([html.B('Database Info:'), html.Div(id=f'databaseinfo_{bp.botid}')]),
+    html.P(html.B('Top level Keys:')),
     html.Div(
         dash_inputbuilder({
             'id': f'level_0_choice_{bp.botid}',
@@ -65,31 +63,39 @@ layout = html.Div([
         'inputtype': 'table',
         'id': f"dfcontent_{bp.botid}",
         # 'filtering': 'native'
+        }),
+    dash_inputbuilder({
+        'inputtype': 'table',
+        'id': f"stratpooldfcontent_{bp.botid}",
+        # 'filtering': 'native'
         })
 
 ])
 
+db_directory = {
+    'Ingredients': ('newbacktest.ingredients.db_ingredient', 'IngredientsDatabase'),
+    'Stage Recipes': ('newbacktest.stagerecipes.db_stagerecipe', 'StageRecipeDatabase'),
+    'Strategies': ('newbacktest.strategies.db_strategycookbook', 'StrategyCookBook'),
+    'Stratpools': ('newbacktest.stratpools.db_stratpool', 'StratPoolDatabase'),
+    'Portfolios': ('newbacktest.portfolios.db_portfolio', 'PortfolioDatabase')
+}
+
 
 @app.callback(
     Output(f'databasename_{bp.botid}', 'children'),
+    Output(f'databaseinfo_{bp.botid}', 'children'),
     Output(f'level_0_choice_{bp.botid}', 'options'),
     Output(f'level_0_choice_{bp.botid}', 'value'),
     Input(f"selectdb_{bp.botid}", 'value')
     )
 def gen_dbname(dbchoice):
-    db_directory = {
-        'Ingredients': ('newbacktest.ingredients.db_ingredient', 'IngredientsDatabase'),
-        'Stage Recipes': ('newbacktest.stagerecipes.db_stagerecipe', 'StageRecipeDatabase'),
-        'Strategies': ('newbacktest.strategies.db_strategycookbook', 'StrategyCookBook'),
-        'Stratpools': ('newbacktest.stratpools.db_stratpool', 'StratPoolDatabase'),
-        'Portfolios': ('newbacktest.portfolios.db_portfolio', 'PortfolioDatabase')
-    }
+
     dbinstance = ModuleOperations().getobject_byvarname(*db_directory[dbchoice])()
     if dbchoice == 'Stratpools':
         dbkeys = list(dbinstance.view_database()['data'].keys())
     else:
         dbkeys = list(dbinstance.view_database().keys())
-    return dbinstance._dbname, [{'label': x, 'value': x} for x in dbkeys], dbkeys[0]
+    return dbinstance._dbname, dbinstance.__str__(), [{'label': x, 'value': x} for x in dbkeys], dbkeys[0]
 
 
 @app.callback(
@@ -99,22 +105,37 @@ def gen_dbname(dbchoice):
     Input(f"selectdb_{bp.botid}", 'value')
     )
 def gen_keycontents(dbkey, dbchoice):
-    db_directory = {
-        'Ingredients': ('newbacktest.ingredients.db_ingredient', 'IngredientsDatabase'),
-        'Stage Recipes': ('newbacktest.stagerecipes.db_stagerecipe', 'StageRecipeDatabase'),
-        'Strategies': ('newbacktest.strategies.db_strategycookbook', 'StrategyCookBook'),
-        'Stratpools': ('newbacktest.stratpools.db_stratpool', 'StratPoolDatabase'),
-        'Portfolios': ('newbacktest.portfolios.db_portfolio', 'PortfolioDatabase')
-    }
+
     dbinstance = ModuleOperations().getobject_byvarname(*db_directory[dbchoice])()
     if dbchoice == 'Portfolios':
-        dictdata = None
-        dfdata = dbinstance.view_item(dbkey).to_dict('records')
+        return dbinstance.view_item(dbkey).to_dict('records'), None
     elif dbchoice == 'Stratpools':
-        dictdata = str(dbinstance.view_database()['data'][dbkey])
-        dfdata = None
+        dictdata = dbinstance.view_database()['data'][dbkey]
+        # stratpool_stratcodelevel(dictdata)
+        return None, html.Div(
+            dash_inputbuilder({
+                'id': f'level_1_choice_{bp.botid}',
+                'prompt': 'Choose a key to explore:',
+                'inputtype': 'radio',
+                'options': [{'label': x, 'value': f"{x}{dbkey}"} for x in dictdata.keys()],
+                'value': "",
+                }), id=f'level_1_{bp.botid}')
+    elif dbchoice == 'Strategies':
+        return None, jsontodash(dbinstance.view_item(dbkey).strategy_ingredients)
     else:
-        dictdata = str(dbinstance.view_item_details(dbkey))
-        dfdata = None
+        dictdata = dbinstance.view_item_details(dbkey)
+        remove_nonrenderables(dictdata)
+        return None, jsontodash(dictdata)
 
-    return dfdata, dictdata
+
+@app.callback(
+    Output(f'stratpooldfcontent_{bp.botid}', 'data'),
+    Input(f"level_1_choice_{bp.botid}", 'value')
+    )
+def gen_stratpooldf(level1choice):
+    if level1choice:
+
+        dbinstance = ModuleOperations().getobject_byvarname(*db_directory['Stratpools'])()
+        return dbinstance.view_database()['data'][level1choice[10:]][level1choice[:10]].itemdata.to_dict('records')
+    else:
+        pass
