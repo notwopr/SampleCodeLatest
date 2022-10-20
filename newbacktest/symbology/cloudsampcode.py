@@ -18,7 +18,8 @@ class CloudSampCode:
             'stratcode': stratcode,
             'ipcode': ipcode,
             'num_periods': int(num_periods),
-            'cloudsamp_startdate': cloudsamp_startdate
+            'cloudsamp_startdate': cloudsamp_startdate,
+            'stratipcode': cloudsampcode[len(Symbology().cloudsampcode_pred):numperiodstartindex-1]
         }
 
     def generate(self, stratcode, ipcode, num_periods, cloudsamp_startdate):

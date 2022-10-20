@@ -30,10 +30,3 @@ def remove_nonrenderables(dictdata):
     for k, v in dictdata.items():
         if k == '_creationdate':
             dictdata[k] = v.string
-
-
-def stratpool_stratcodelevel(dictdata):
-    for k, v in dictdata.items():
-        print(v.__dict__)
-        newv = remove_nonrenderables(v.__dict__)
-        dictdata[k] = newv

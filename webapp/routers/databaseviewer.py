@@ -22,7 +22,7 @@ from ..os_functions import get_currentscript_filename
 # from ..common_resources import tickers
 from ..dashinputs import dash_inputbuilder
 from newbacktest.module_operations import ModuleOperations
-from ..html_json import jsontodash, remove_nonrenderables, stratpool_stratcodelevel
+from ..html_json import jsontodash, remove_nonrenderables
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -30,7 +30,17 @@ bp = BotParams(
     "Abstract Class to view databases.",
     None
 )
-# testdb = IngredientsDatabase().view_database()
+
+
+db_directory = {
+    'Ingredients': ('newbacktest.ingredients.db_ingredient', 'IngredientsDatabase'),
+    'Stage Recipes': ('newbacktest.stagerecipes.db_stagerecipe', 'StageRecipeDatabase'),
+    'Strategies': ('newbacktest.strategies.db_strategycookbook', 'StrategyCookBook'),
+    'Stratpools': ('newbacktest.stratpools.db_stratpool', 'StratPoolDatabase'),
+    'Portfolios': ('newbacktest.portfolios.db_portfolio', 'PortfolioDatabase'),
+    'CloudSamples': ('newbacktest.cloudgrapher.db_cloudsample', 'CloudSampleDatabase')
+}
+
 tbodydata = []
 layout = html.Div([
     # html.Table(gen_tablecontents(tbodydata)),
@@ -39,7 +49,7 @@ layout = html.Div([
         'id': f'selectdb_{bp.botid}',
         'prompt': 'Select a Database',
         'inputtype': 'dropdown',
-        'options': [{'label': k, 'value': k} for k in ['Ingredients', 'Stage Recipes', 'Strategies', 'Stratpools', 'Portfolios']],
+        'options': [{'label': k, 'value': k} for k in db_directory.keys()],
         'placeholder': 'Choose an existing database',
         'value': 'Ingredients',
         'multi': False,
@@ -72,14 +82,6 @@ layout = html.Div([
 
 ])
 
-db_directory = {
-    'Ingredients': ('newbacktest.ingredients.db_ingredient', 'IngredientsDatabase'),
-    'Stage Recipes': ('newbacktest.stagerecipes.db_stagerecipe', 'StageRecipeDatabase'),
-    'Strategies': ('newbacktest.strategies.db_strategycookbook', 'StrategyCookBook'),
-    'Stratpools': ('newbacktest.stratpools.db_stratpool', 'StratPoolDatabase'),
-    'Portfolios': ('newbacktest.portfolios.db_portfolio', 'PortfolioDatabase')
-}
-
 
 @app.callback(
     Output(f'databasename_{bp.botid}', 'children'),
@@ -111,7 +113,6 @@ def gen_keycontents(dbkey, dbchoice):
         return dbinstance.view_item(dbkey).to_dict('records'), None
     elif dbchoice == 'Stratpools':
         dictdata = dbinstance.view_database()['data'][dbkey]
-        # stratpool_stratcodelevel(dictdata)
         return None, html.Div(
             dash_inputbuilder({
                 'id': f'level_1_choice_{bp.botid}',

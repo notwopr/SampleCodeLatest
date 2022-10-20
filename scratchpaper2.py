@@ -22,6 +22,10 @@ from newbacktest.cloudgrapher.cloudsampgenerator import CloudSampleGenerator
 # from newbacktest.db_cloudsample import CloudSampleDatabase
 # from newbacktest.growthcalculator import GrowthCalculator
 # from newbacktest.class_investplan import InvestPlanCode
+from newbacktest.symbology.cloudsampcode import CloudSampCode
+csc = 'CDTG|0$s#::0a:70::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::2a:1::2b:d::2c:percentile.IP.5.360.0.5.2000-10-24'
+# print(CloudSampCode().decode(csc)['stratipcode'])
+# exit()
 if __name__ == '__main__':
     wlprofile = [
         {
@@ -56,6 +60,26 @@ if __name__ == '__main__':
             }
         ]
     ]
+    strategydict2 = [
+        [
+            {
+                'metricfunc': 'xtoathdiff_single',
+                # 'filterdirection': '>',
+                'sourcedata': 'eodprices',
+                'nantreatment': 'ffillandremove',
+                # 'threshold_type': 'byvalue',
+                # 'threshold_value': 0,
+                # 'filterby': 'value',
+                'look_back': 0,
+                'curvetype': 'raw',
+                'weight': 1,
+                'ranktype': 'percentile',
+                'rankdirection': 'a',
+                # 'occurtype': 'last',
+                'compmode': 'last'
+            }
+        ]
+    ]
     # ds = DataSource().opends('eodprices_bench')
     # ds.ffill(inplace=True)
     # print(ds)
@@ -74,13 +98,13 @@ if __name__ == '__main__':
     # pprint(PortfolioDatabase().view_database())
     # exit()
 
-    # num_periods = 5
-    # periodlen = 360
-    # portsize = 5
-    # batchstart = 0
-    #
-    # CloudSampleGenerator().generate(strategydict, periodlen, portsize, batchstart, 1, num_periods)
-    # exit()
+    num_periods = 3
+    periodlen = 180
+    portsize = 5
+    batchstart = 0
+
+    CloudSampleGenerator().generate(strategydict2, periodlen, portsize, batchstart, 1, num_periods)
+    exit()
     # sampcode = 'SCTG|0$f#::0a:123::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::f1:value::f2:0.002::f4:byvalue::f6:<=::m1:first::m2:last.IP.10.360.0.1.2017-06-05'
     # scobj = SampCode().decode(sampcode)
     # ipcode = scobj['ipcode']

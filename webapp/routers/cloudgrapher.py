@@ -11,35 +11,30 @@ Purpose:  .
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
 #   THIRD PARTY IMPORTS
-import dash
 from dash import dcc, html, callback_context
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 from dashappobject import app
 import plotly.express as px
 import pandas as pd
-import numpy as np
 #   LOCAL APPLICATION IMPORTS
 from ..botclasses import BotParams
 # from Modules.referencetools.dipdatevisualizer.DIPDATEVISUALIZER import dipdatevisualizer_dash
 # from Modules.price_history import grabsinglehistory
 from ..os_functions import get_currentscript_filename
 # from ..common_resources import tickers
-from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
+from ..dashinputs import gen_tablecontents, dash_inputbuilder
 from ..datatables import DataTableOperations
 # from Modules.dates import DateOperations
 # from Modules.timeperiodbot import random_dates
-from newbacktest.cloudgrapher.cloudgrapher_data import CloudGrapherData
 from newbacktest.symbology.cloudsampcode import CloudSampCode
-from newbacktest.datasource import DataSource
-from newbacktest.dataframe_operations import DataFrameOperations
-from newbacktest.growthcalculator import GrowthCalculator
-from newbacktest.symbology.investplancode import InvestPlanCode
+from newbacktest.cloudgrapher.db_cloudsample import CloudSampleDatabase
+from .cloudgrapher_helper import aggregate_sipcols, gen_clouddf_single
 
 bp = BotParams(
     get_currentscript_filename(__file__),
     'Cloud Grapher',
     "The Cloud Grapher graphs the growth curves of all trials of all strategies on the same x axis, being the number of days invested.",
-    CloudGrapherData
+    None
 )
 
 tbodydata = [
@@ -72,11 +67,32 @@ layout = html.Div([
             'inputtype': 'checklist',
             'options': [
                 {'label': 'Port Curves Only', 'value': 'pco'},
-                {'label': 'Endpoints Only', 'value': 'epo'}
+                {'label': 'Endpoints Only', 'value': 'epo'},
+                {'label': 'Group by Stratipcode', 'value': 'sic'}
             ],
             'value': ['pco', 'epo'],
             'inline': 'inline',
             }),
+        html.Div([
+            html.Span([html.B('Group by Stratipcode Options:')]),
+            dash_inputbuilder({
+                'id': f'aggmode_{bp.botid}',
+                'prompt': 'How do you want to aggregate?',
+                'inputtype': 'radio',
+                'options': [{'label': 'Aggregate using Mean', 'value': 'mean'},
+                            {'label': 'Aggregate using Median', 'value': 'median'}],
+                'value': 'mean',
+                'inline': 'inline'
+                }),
+            dash_inputbuilder({
+                'id': f'groupby_{bp.botid}',
+                'inputtype': 'checklist',
+                'options': [
+                    {'label': 'Show Standard Deviation Curves', 'value': 'std'}
+                ],
+                'inline': 'inline'
+                })
+                ], id=f'groupbydiv_{bp.botid}'),
         html.Span([html.B('Hover Options:')]),
         dash_inputbuilder({
             'id': f'hovermode_{bp.botid}',
@@ -91,6 +107,16 @@ layout = html.Div([
     dcc.Graph(id=f'cloudgraph_{bp.botid}'),
     dash_inputbuilder({
         'inputtype': 'table',
+        'id': f"codechart_{bp.botid}"
+        }),
+    html.Br(),
+    dash_inputbuilder({
+        'inputtype': 'table',
+        'id': f"sipchart_{bp.botid}"
+        }),
+    html.Br(),
+    dash_inputbuilder({
+        'inputtype': 'table',
         'id': f"cloudchart_{bp.botid}"
         }),
     html.Div(dash_inputbuilder({
@@ -100,63 +126,76 @@ layout = html.Div([
 ])
 
 
-# gen dipchart source
+# modify growth rate input fields
 @app.callback(
-    Output(f'cloudchartsource_{bp.botid}', 'data'),
-    Input(f"startcapital_{bp.botid}", 'value'),
-    Input(f"addbenchmark_{bp.botid}", 'value'),
+    Output(f'groupbydiv_{bp.botid}', 'hidden'),
     Input(f"misc_{bp.botid}", 'value')
     )
-def get_cloudchart(stake, benchmarks, misc):
-    cloudsampcode = 'CDTG|0$s#::0a:70::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::2a:1::2b:d::2c:percentile.IP.5.360.0.5.2000-10-24'
-    df = bp.botfunc().gen_cloudgraph_singlesample(cloudsampcode)
-    portcols = [i for i in df.columns if i not in ['date', 'Days Invested', 'portcurve']]
+def update_inputs_growthrate(misc):
+    return None if 'sic' in misc else 'hidden'
 
-    '''benchmark options'''
-    if benchmarks:
-        bdf = DataSource().opends('eodprices_bench')
-        bdf.ffill(inplace=True)
-        bdf = DataFrameOperations().filter_column(bdf, ['date']+benchmarks)
-        df = df.join(bdf.set_index('date'), how='left', on="date")
-        GrowthCalculator().getnormpricesdf(df, benchmarks)
 
-    '''stake calculations'''
-    cso = CloudSampCode().decode(cloudsampcode)
-    portsize = InvestPlanCode().decode(cso['ipcode'])['portsize']
-    periodlen = InvestPlanCode().decode(cso['ipcode'])['periodlen']
-    num_periods = cso['num_periods']
-    if stake:
-        nonportfoliocurves = ['portcurve'] + benchmarks
-        df[nonportfoliocurves] = stake * (1 + df[nonportfoliocurves])
-        for p in range(num_periods):
-            periodcols = [i for i in df.columns if i.endswith(str(p))]
-            periodstake = df['portcurve'].iloc[p * periodlen]
-            df[periodcols] = (periodstake / portsize) * (1 + df[periodcols])
-    else:
-        allcurves = portcols + ['portcurve'] + benchmarks
-        df[allcurves] = df[allcurves] * 100
+# gen cloudchart source
+@app.callback(
+    Output(f'cloudchartsource_{bp.botid}', 'data'),
+    Output(f'codechart_{bp.botid}', 'data'),
+    Output(f'sipchart_{bp.botid}', 'data'),
+    Input(f"startcapital_{bp.botid}", 'value'),
+    Input(f"addbenchmark_{bp.botid}", 'value'),
+    Input(f"misc_{bp.botid}", 'value'),
+    Input(f"aggmode_{bp.botid}", 'value'),
+    Input(f"groupby_{bp.botid}", 'value'),
+    )
+def get_cloudchart(stake, benchmarks, misc, aggmode, groupby):
 
-    '''misc options'''
-    if misc:
-        allcurves = portcols + ['portcurve'] + benchmarks
-        if 'pco' in misc:
-            df = df[[i for i in df.columns if i not in portcols]]
-            allcurves = ['portcurve'] + benchmarks
-        if 'epo' in misc:
-            df.loc[~df['Days Invested'].isin([i*periodlen for i in range(num_periods+1)]), allcurves] = np.nan
-    tabledata = df.to_dict('records')
-    return tabledata
+    # gather all cloudsampcodes
+    allcloudsampcodes = list(CloudSampleDatabase().view_database().keys())
+
+    '''create ids for stratipcode and cloudsampcode'''
+    csc_id = {}
+    sic_id = {}
+    for i in range(len(allcloudsampcodes)):
+        csc = allcloudsampcodes[i]
+        if csc not in csc_id.keys():
+            csc_id[csc] = len(csc_id)
+            sic = CloudSampCode().decode(csc)['stratipcode']
+            sic_id[sic] = sic_id.get(sic, []) + [csc_id[csc]]
+
+    '''generate graphdfs for each cloudsampcode'''
+    idcodesuffix = '_|_'
+    allclouddfs = [gen_clouddf_single(idcodesuffix, misc, stake, benchmarks, csc_id, cloudsampcode) for cloudsampcode in csc_id.keys()]
+
+    '''combine all cloudsampcodedfs together'''
+    mdf = pd.concat(allclouddfs, ignore_index=False, axis=1)
+    mdf.reset_index(inplace=True)
+    mdf.rename(columns={'index': 'Days Invested'}, inplace=True)
+
+    '''aggregate by stratipcode if requested'''
+    sipchartdata = []
+    if 'sic' in misc:
+        for i, stratipcode in enumerate(sic_id.keys()):
+            sicprefix = f'sic{i}'
+            sipchartdata.append({'sic_id': sicprefix, 'csc_ids': f"{sic_id[stratipcode]}", 'stratipcode': stratipcode})
+            '''aggregate portcurves'''
+            aggregate_sipcols(aggmode, groupby, mdf, idcodesuffix, sicprefix, sic_id, 'portcurve', stratipcode)
+            '''aggregate benchcurves'''
+            for b in benchmarks:
+                aggregate_sipcols(aggmode, groupby, mdf, idcodesuffix, sicprefix, sic_id, b, stratipcode)
+    '''generate codechart'''
+    codedf = pd.DataFrame(data=[{'csc_id': v, 'sampcode': k, 'stratipcode': CloudSampCode().decode(k)['stratipcode']} for k, v in csc_id.items()])
+    return mdf.to_dict('records'), codedf.to_dict('records'), pd.DataFrame(data=sipchartdata).to_dict('records')
 
 
 # gen and sort cloudchart
 @app.callback(
     Output(f'cloudchart_{bp.botid}', 'data'),
+    Output(f'cloudchart_{bp.botid}', 'columns'),
     Input(f"cloudchart_{bp.botid}", 'data'),
     Input(f"cloudchart_{bp.botid}", 'sort_by'),
     Input(f"cloudchartsource_{bp.botid}", "data"),
     )
 def gen_sort_cloudchart(cloudchart, sort_by, cloudchartsource):
-    return DataTableOperations().return_sortedtable(sort_by, callback_context, cloudchart, cloudchartsource).to_dict('records')
+    return DataTableOperations().return_sortedtable_and_makecolhideable(sort_by, callback_context, cloudchart, cloudchartsource)
 
 
 # gen graph
@@ -170,7 +209,7 @@ def gen_cloudgraph(cloudchartsource, stake, hovermode):
 
     if cloudchartsource:
         df = pd.DataFrame.from_records(cloudchartsource)
-        yaxes = [i for i in df.columns[1:]]
+        yaxes = [i for i in df.columns if not i.endswith('date')]
         fig = px.line(df, x='Days Invested', y=yaxes, markers=False)
 
     else:
