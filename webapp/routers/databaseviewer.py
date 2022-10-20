@@ -74,6 +74,14 @@ layout = html.Div([
         'id': f"dfcontent_{bp.botid}",
         # 'filtering': 'native'
         }),
+    html.Div(
+        dash_inputbuilder({
+            'id': f'level_1_choice_{bp.botid}',
+            'prompt': 'Choose a key to explore:',
+            'inputtype': 'radio',
+            'options': [],
+            'value': "",
+            }), id=f'level_1_{bp.botid}'),
     dash_inputbuilder({
         'inputtype': 'table',
         'id': f"stratpooldfcontent_{bp.botid}",
@@ -103,6 +111,8 @@ def gen_dbname(dbchoice):
 @app.callback(
     Output(f'dfcontent_{bp.botid}', 'data'),
     Output(f'level_0_content_{bp.botid}', 'children'),
+    Output(f"level_1_choice_{bp.botid}", 'options'),
+    Output(f"level_1_{bp.botid}", 'hidden'),
     Input(f"level_0_choice_{bp.botid}", 'value'),
     Input(f"selectdb_{bp.botid}", 'value')
     )
@@ -110,31 +120,25 @@ def gen_keycontents(dbkey, dbchoice):
 
     dbinstance = ModuleOperations().getobject_byvarname(*db_directory[dbchoice])()
     if dbchoice == 'Portfolios':
-        return dbinstance.view_item(dbkey).to_dict('records'), None
+        return dbinstance.view_item(dbkey).to_dict('records'), None, [], 'hidden'
     elif dbchoice == 'Stratpools':
         dictdata = dbinstance.view_database()['data'][dbkey]
-        return None, html.Div(
-            dash_inputbuilder({
-                'id': f'level_1_choice_{bp.botid}',
-                'prompt': 'Choose a key to explore:',
-                'inputtype': 'radio',
-                'options': [{'label': x, 'value': f"{x}{dbkey}"} for x in dictdata.keys()],
-                'value': "",
-                }), id=f'level_1_{bp.botid}')
+        return None, None, [{'label': x, 'value': f"{x}{dbkey}"} for x in dictdata.keys()], None
     elif dbchoice == 'Strategies':
-        return None, jsontodash(dbinstance.view_item(dbkey).strategy_ingredients)
+        return None, jsontodash(dbinstance.view_item(dbkey).strategy_ingredients), [], 'hidden'
     else:
         dictdata = dbinstance.view_item_details(dbkey)
         remove_nonrenderables(dictdata)
-        return None, jsontodash(dictdata)
+        return None, jsontodash(dictdata), [], 'hidden'
 
 
 @app.callback(
     Output(f'stratpooldfcontent_{bp.botid}', 'data'),
-    Input(f"level_1_choice_{bp.botid}", 'value')
+    Input(f"level_1_choice_{bp.botid}", 'value'),
+    Input(f"selectdb_{bp.botid}", 'value')
     )
-def gen_stratpooldf(level1choice):
-    if level1choice:
+def gen_stratpooldf(level1choice, dbchoice):
+    if level1choice and dbchoice == 'Stratpools':
 
         dbinstance = ModuleOperations().getobject_byvarname(*db_directory['Stratpools'])()
         return dbinstance.view_database()['data'][level1choice[10:]][level1choice[:10]].itemdata.to_dict('records')

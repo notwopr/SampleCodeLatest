@@ -126,7 +126,7 @@ layout = html.Div([
 ])
 
 
-# modify growth rate input fields
+# hide show extra options
 @app.callback(
     Output(f'groupbydiv_{bp.botid}', 'hidden'),
     Input(f"misc_{bp.botid}", 'value')
