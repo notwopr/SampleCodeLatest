@@ -23,6 +23,11 @@ from newbacktest.cloudgrapher.cloudsampgenerator import CloudSampleGenerator
 # from newbacktest.growthcalculator import GrowthCalculator
 # from newbacktest.class_investplan import InvestPlanCode
 from newbacktest.symbology.cloudsampcode import CloudSampCode
+import datetime as dt
+import math
+total = 20312.31
+print(type(round(total)))
+exit()
 csc = 'CDTG|0$s#::0a:70::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::2a:1::2b:d::2c:percentile.IP.5.360.0.5.2000-10-24'
 # print(CloudSampCode().decode(csc)['stratipcode'])
 # exit()

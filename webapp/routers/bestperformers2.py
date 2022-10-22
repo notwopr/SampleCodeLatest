@@ -43,7 +43,6 @@ from formatting import format_htmltable_row, format_tabs
 benchmarkdata = getbenchdates(benchmarks)
 
 
-
 bp = BotParams(
     get_currentscript_filename(__file__),
     'Best Performers Bot',
@@ -506,7 +505,7 @@ layout = html.Div([
     )
 def randomize_date(n_clicks):
     new_start = random_dates(staticmindate, staticmaxdate, 1)[0]
-    new_end = random_dates(DateOperations().plusminusdays(new_start, 1, 'add'), staticmaxdate, 1)[0]
+    new_end = random_dates(DateOperations().plusminusdays(new_start, 1), staticmaxdate, 1)[0]
     return new_start, new_end
 
 
