@@ -10,6 +10,8 @@ Purpose:  .
 """
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
+from pathlib import Path
+import os
 #   THIRD PARTY IMPORTS
 import dash
 from dash import dcc, html, callback_context
@@ -38,6 +40,10 @@ from formatting import format_tabs
 from newbacktest.perfmetrics.perfmetrics_perfprofileupdater import PerfProfileUpdater
 from newbacktest.perfmetrics.perfmetrics_ranker_schemas import rank_schemas
 from newbacktest.perfmetrics.perfmetrics_ranker import PerfMetricRanker
+from webapp.servernotes import getlastmodified
+from file_hierarchy import DirPaths, FileNames
+from file_functions import readpkl, join_str
+from formatting import helpful_note_value, helpful_note_key
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -46,10 +52,26 @@ bp = BotParams(
     None
 )
 
-tbodydata = []
+sampdfpath = Path(join_str([DirPaths().dbparent, f"{FileNames().fn_allsampsdf}.pkl"]))
+
+
+def get_lastsampupdate():
+    if os.path.exists(sampdfpath):
+        return getlastmodified(Path(DirPaths().dbparent), f"{FileNames().fn_allsampsdf}.pkl")#[:10]
+    else:
+        return 'Never.'
+
+
 layout = html.Div([
     html.Div([
-        html.Table(gen_tablecontents(tbodydata)),
+        dash_inputbuilder({
+            'id': f'updatesamps_{bp.botid}',
+            'buttontext': 'Update Samples',
+            'inputtype': 'button_submit'
+            }),
+        html.Br(),
+        html.P([html.Small('Samples last updated: ', className=helpful_note_key), html.Small(id=f'lastupdate_{bp.botid}', className=helpful_note_value)]),
+        html.Br(),
         html.Span([html.B('Enter your stake:')]),
         dash_inputbuilder({
             'id': f'startcapital_{bp.botid}',
@@ -111,12 +133,18 @@ layout = html.Div([
 # gen sample source
 @app.callback(
     Output(f'sampleschartsource_{bp.botid}', 'data'),
-    Input(f"startcapital_{bp.botid}", 'value')
+    Output(f'lastupdate_{bp.botid}', 'children'),
+    Input(f"startcapital_{bp.botid}", 'value'),
+    Input(f"updatesamps_{bp.botid}", 'n_clicks')
     )
-def get_samplesource(stake):
-    perfmetricdf = PerfProfileUpdater().get_samplesdf()
+def get_samplesource(stake, updatesamps):
+    print(updatesamps)
+    if updatesamps or not os.path.exists(sampdfpath):
+        perfmetricdf = PerfProfileUpdater().get_samplesdf()
+    else:
+        perfmetricdf = readpkl(FileNames().fn_allsampsdf, Path(DirPaths().dbparent))
     tabledata = perfmetricdf.to_dict('records')
-    return tabledata
+    return tabledata, get_lastsampupdate()
 
 
 # gen and sort samples chart

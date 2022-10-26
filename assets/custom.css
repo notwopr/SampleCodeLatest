@@ -7,6 +7,7 @@ html, body {
 .purple {
   background: #393e46;
 }
+
 .charcoal {
   background: #393e46;
 }
@@ -38,6 +39,12 @@ html, body {
 }
 .offwhite_txt {
   color: #e5e5e5;
+}
+.lightgrey_txt {
+  color: #787878;
+}
+.fadedpurple_txt {
+  color: #a089cc;
 }
 
 .DateRangePicker {

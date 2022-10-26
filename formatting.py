@@ -21,6 +21,8 @@ wallpaper_color = ''
 banner_text = 'fw-bold darkgrey_txt display-1 font_banner'
 text_dark_thick = 'fw-bold charcoal_txt display-3'
 format_heading_txt = 'fw-bold font_heading display-5'
+helpful_note_value = 'fadedpurple_txt'
+helpful_note_key = ''
 
 # HTML TABLES
 format_htmltable_leftcols = 'pe-2 pb-1 pt-1 bg-transparent'

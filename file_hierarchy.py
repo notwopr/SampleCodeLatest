@@ -42,6 +42,7 @@ class FileNames:
     fn_db_wlpool = 'db_wlpool'
     fn_db_perfmetricnames = 'db_perfmetricnames'
     fn_db_cloudsample = 'db_cloudsample'
+    fn_allsampsdf = 'allsampsdf'
 
 
 # contains all main directory paths in string form

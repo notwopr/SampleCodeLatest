@@ -1,5 +1,6 @@
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
+from pathlib import Path
 #   THIRD PARTY IMPORTS
 import pandas as pd
 #   LOCAL APPLICATION IMPORTS
@@ -7,6 +8,8 @@ from newbacktest.perfmetrics.perfmetrics_db_funcprofile import PerfMetricFunctio
 from newbacktest.perfmetrics.perfmetrics_db_perfprof import PerfProfileLib
 from newbacktest.perfmetrics.perfmetrics_perfprofileupdater_perfmetricnames import PerfMetricNameDatabase
 from newbacktest.perfmetrics.baselistofperfmetrics import baselineperfmetrics
+from file_functions import savetopkl
+from file_hierarchy import DirPaths, FileNames
 
 
 class PerfProfileUpdater:
@@ -43,5 +46,7 @@ class PerfProfileUpdater:
                 neworder.append(m)
                 remainder.remove(m)
         neworder.extend(remainder)
+        savetopkl(FileNames().fn_allsampsdf, Path(DirPaths().dbparent), sdf)
         sdf = sdf[neworder]
+
         return sdf
