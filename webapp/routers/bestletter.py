@@ -67,6 +67,7 @@ layout = html.Div([
                 })
             ], className=format_tabs),
         dcc.Tab(label='Visuals', children=[
+            html.Span([html.B('Hover Options:')]),
             dash_inputbuilder({
                 'id': f'hovermode_{bp.botid}',
                 'prompt': 'Choose how you want to display data when you hover over the graph.',
@@ -75,7 +76,8 @@ layout = html.Div([
                 'value': 'closest',
                 'inline': 'inline'
                 }),
-            dcc.Graph(id=f'output_{bp.botid}')
+            dcc.Graph(id=f'output_{bp.botid}'),
+            dcc.Graph(id=f'output_pie_{bp.botid}')
             ], className=format_tabs)
     ])
 
@@ -112,14 +114,22 @@ def calc_bestletter(n_clicks, date, dfdata, sort_by):
 
 @app.callback(
     Output(f'output_{bp.botid}', "figure"),
+    Output(f'output_pie_{bp.botid}', "figure"),
     Input(f'letterstats_{bp.botid}', "data"),
     Input(f"hovermode_{bp.botid}", 'value')
     )
 def gen_graph(dfdata, hovermode):
     if dfdata:
         df = pd.DataFrame.from_records(dfdata)
-        fig = px.bar(df, x='First Letter', y=df.columns[1:])
-        fig.update_layout(transition_duration=500, hovermode=hovermode)
-        return fig
+        bar_y = df.columns[1:]
+        bar_x = pie_names = 'First Letter'
+        pie_values = df.columns[1]
     else:
-        return px.bar(pd.DataFrame(data=[0]))
+        df = pd.DataFrame(data=[0])
+        bar_x = pie_names = 0
+        bar_y = []
+        pie_values = df.columns
+    pie_fig = px.pie(df, names=pie_names, values=pie_values)
+    fig = px.bar(df, x=bar_x, y=bar_y, barmode='group')
+    fig.update_layout(transition_duration=500, hovermode=hovermode)
+    return fig, pie_fig
