@@ -44,6 +44,8 @@ from webapp.servernotes import getlastmodified
 from file_hierarchy import DirPaths, FileNames
 from file_functions import readpkl, join_str
 from formatting import helpful_note_value, helpful_note_key
+from Modules.numbers import twodecp
+from Modules.numbers_formulas import func_ending_principal
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -72,26 +74,80 @@ layout = html.Div([
         html.Br(),
         html.P([html.Small('Samples last updated: ', className=helpful_note_key), html.Small(id=f'lastupdate_{bp.botid}', className=helpful_note_value)]),
         html.Br(),
-        html.Span([html.B('Enter your stake:')]),
-        dash_inputbuilder({
-            'id': f'startcapital_{bp.botid}',
-            'prompt': 'Enter your stake',
-            'placeholdertext': '$',
-            'inputtype': 'number',
-            'min': 1
-            }),
-        html.Span([html.B('Hover Options:')]),
-        dash_inputbuilder({
-            'id': f'hovermode_{bp.botid}',
-            'prompt': 'Choose how you want to display data when you hover over the graph.',
-            'inputtype': 'radio',
-            'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
-            'value': 'x',
-            'inline': 'inline'
-            })
+        # html.Span([html.B('Enter your stake:')]),
+        # dash_inputbuilder({
+        #     'id': f'startcapital_{bp.botid}',
+        #     'prompt': 'Enter your stake',
+        #     'placeholdertext': '$',
+        #     'inputtype': 'number',
+        #     'min': 1
+        #     }),
+        # html.Span([html.B('Hover Options:')]),
+        # dash_inputbuilder({
+        #     'id': f'hovermode_{bp.botid}',
+        #     'prompt': 'Choose how you want to display data when you hover over the graph.',
+        #     'inputtype': 'radio',
+        #     'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
+        #     'value': 'x',
+        #     'inline': 'inline'
+        #     })
     ], id=f'input_{bp.botid}'),
     html.Br(),
     dcc.Tabs([
+        dcc.Tab(label='Visuals', children=[
+            html.Div([
+                html.B('Choose graph style.'),
+                dash_inputbuilder({
+                    'id': f'chart_type_{bp.botid}',
+                    'inputtype': 'radio',
+                    'options': [{'label': x, 'value': x} for x in [
+                        'Scatter',
+                        'Box',
+                        'Violin']
+                        ],
+                    'value': 'Scatter',
+                    'inline': 'inline'
+                    }),
+                html.B('Choose which strats to hide/show.'),
+                dash_inputbuilder({
+                    'id': f'hidestrat_{bp.botid}',
+                    'inputtype': 'dropdown',
+                    'options': [],
+                    'value': [],
+                    'multi': True,
+                    'searchable': False,
+                    'clearable': False
+                    # 'className': 'longchecklist',
+                    # 'inline': 'block'
+                    }),
+                html.Span([html.B('Enter your stake (optional). '), html.Span("If you enter a stake, you also must enter the number of days for which you want to invest that stake.")]),
+                dash_inputbuilder({
+                    'id': f'startcapital_{bp.botid}',
+                    'prompt': 'Enter your stake (optional).',
+                    'placeholdertext': '$',
+                    'inputtype': 'number',
+                    'min': 1
+                    }),
+                html.Div([
+                    html.Span([html.B('Enter the investment period. '), html.Span("Enter the number of days (integer) to invest that stake.")]),
+                    dash_inputbuilder({
+                        'id': f'stakeperiod_{bp.botid}',
+                        'prompt': 'Enter the number of days (integer) to invest that stake.',
+                        'placeholdertext': 'integers >= 1 only',
+                        'inputtype': 'number',
+                        'min': 1,
+                        'step': 1
+                        })], id=f'stakeperiod_div_{bp.botid}'),
+                html.Span([html.B('Hover Options:')]),
+                dash_inputbuilder({
+                    'id': f'hovermode_{bp.botid}',
+                    'inputtype': 'radio',
+                    'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
+                    'value': 'closest',
+                    'inline': 'inline'
+                    }),
+                dcc.Graph(id=f"overallstats_{bp.botid}")
+            ], id=f'displayresult_{bp.botid}')], className=format_tabs),
         dcc.Tab(label='Rankings', children=[
             html.Span([html.B('Select a Ranking Schema:')]),
             dash_inputbuilder({
@@ -134,17 +190,20 @@ layout = html.Div([
 @app.callback(
     Output(f'sampleschartsource_{bp.botid}', 'data'),
     Output(f'lastupdate_{bp.botid}', 'children'),
+    Output(f"hidestrat_{bp.botid}", 'options'),
+    Output(f"hidestrat_{bp.botid}", 'value'),
     Input(f"startcapital_{bp.botid}", 'value'),
     Input(f"updatesamps_{bp.botid}", 'n_clicks')
     )
 def get_samplesource(stake, updatesamps):
-    print(updatesamps)
     if updatesamps or not os.path.exists(sampdfpath):
         perfmetricdf = PerfProfileUpdater().get_samplesdf()
     else:
         perfmetricdf = readpkl(FileNames().fn_allsampsdf, Path(DirPaths().dbparent))
     tabledata = perfmetricdf.to_dict('records')
-    return tabledata, get_lastsampupdate()
+    hidestrat_options = [{'label': x, 'value': x} for x in set(perfmetricdf['stratipcode'])]
+    hidestrat_values = list(set(perfmetricdf['stratipcode']))
+    return tabledata, get_lastsampupdate(), hidestrat_options, hidestrat_values
 
 
 # gen and sort samples chart
@@ -185,25 +244,101 @@ def gen_sort_rankerchart(rankingschart, sort_by, rankingsource):
     return DataTableOperations().return_sortedtable_and_makecolhideable(sort_by, callback_context, rankingschart, rankingsource)
 
 
-# # gen graph
-# @app.callback(
-#     Output(f'cloudgraph_{bp.botid}', 'figure'),
-#     Input(f"cloudchartsource_{bp.botid}", 'data'),
-#     Input(f"startcapital_{bp.botid}", 'value'),
-#     Input(f"hovermode_{bp.botid}", 'value')
-#     )
-# def gen_cloudgraph(cloudchartsource, stake, hovermode):
-#
-#     if cloudchartsource:
-#         df = pd.DataFrame.from_records(cloudchartsource)
-#         yaxes = [i for i in df.columns[1:]]
-#         fig = px.line(df, x='Days Invested', y=yaxes, markers=False)
-#
-#     else:
-#         fig = px.line(pd.DataFrame(data=[0]))
-#     yaxis = '%'
-#     if stake:
-#         yaxis = '$'
-#     fig.update_layout(transition_duration=500, yaxis_title=yaxis, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-#     fig.update_traces(connectgaps=True)
-#     return fig
+# gen graph
+@app.callback(
+    Output(f'overallstats_{bp.botid}', "figure"),
+    Input(f"startcapital_{bp.botid}", 'value'),
+    Input(f"stakeperiod_{bp.botid}", 'value'),
+    Input(f"hidestrat_{bp.botid}", 'value'),
+    Input(f"chart_type_{bp.botid}", "value"),
+    Input(f"hovermode_{bp.botid}", 'value'),
+    Input(f"sampleschartsource_{bp.botid}", "data"),
+    )
+def gen_graph(stake, stakeperiod, hidestrat, chart_type, hovermode, sampleschartsource):
+    basedf = pd.DataFrame.from_records(sampleschartsource)
+    bdf = basedf[[c for c in basedf.columns if c not in ['invest_startdate', 'invest_enddate']]]
+    bdf = bdf[bdf['stratipcode'].isin(hidestrat)]
+    if len(bdf) == 0:
+        fig = px.line(x=None, y=None)
+        return fig
+    else:
+        if stake and stakeperiod:
+            bdf[
+                'Ending Cash ($)'
+                ] = bdf[
+                    'growthrate_effectivedaily'
+                    ].apply(lambda x: twodecp(func_ending_principal(stake, x, stakeperiod)))
+            bdf[
+                'Ending Cash (Benchmark) ($)'
+                ] = bdf[
+                    'growthrate_effectivedaily_bestbench'
+                    ].apply(lambda x: twodecp(func_ending_principal(stake, x, stakeperiod)))
+            bdf[
+                'Ending Cash over Benchmark ($)'
+                ] = bdf['Ending Cash ($)']-bdf['Ending Cash (Benchmark) ($)']
+            bdf[
+                'Amount Earned ($)'
+                ] = bdf[
+                    'Ending Cash ($)'
+                    ]-stake
+            bdf[
+                'Amount Earned (Benchmark) ($)'
+                ] = bdf[
+                    'Ending Cash (Benchmark) ($)'
+                    ]-stake
+            bdf[
+                'Amount Earned over Benchmark ($)'
+                ] = bdf['Amount Earned ($)']-bdf['Amount Earned (Benchmark) ($)']
+            bdf[
+                'Overall Growth'
+                ] = bdf[
+                    'Amount Earned ($)'
+                    ]/stake
+            bdf[
+                'Overall Growth (Benchmark)'
+                ] = bdf[
+                    'Amount Earned (Benchmark) ($)'
+                    ]/stake
+            bdf[
+                'Overall Growth over Benchmark'
+                ] = bdf['Overall Growth']-bdf['Overall Growth (Benchmark)']
+            bdf[
+                'Earned per Day ($)'
+                ] = bdf[
+                    'Amount Earned ($)'
+                    ]/stakeperiod
+            bdf[
+                'Earned per Day (Benchmark) ($)'
+                ] = bdf[
+                    'Amount Earned (Benchmark) ($)'
+                    ]/stakeperiod
+            bdf[
+                'Earned per Day over Benchmark ($)'
+                ] = bdf['Earned per Day ($)']-bdf['Earned per Day (Benchmark) ($)']
+        bdf['sample size'] = bdf['stratipcode'].apply(lambda x: bdf[bdf['stratipcode'] == x]['stratipcode'].count())
+        df = pd.melt(bdf, id_vars="stratipcode", value_vars=bdf.columns[1:], var_name='metric', value_name='value')
+        df['section'] = df['metric'].apply(lambda x: 'rank metrics' if x != 'sample size' else 'sample size')
+        if chart_type == 'Scatter':
+            fig = px.scatter(df, x="stratipcode", y="value", color="metric", facet_row="section")
+            fig.update_traces(marker=dict(size=12, opacity=0.5))
+        elif chart_type == 'Box':
+            fig = px.box(df, x="stratipcode", y="value", color="metric", facet_row="section", boxmode="overlay")
+        elif chart_type == 'Violin':
+            fig = px.violin(df, x="stratipcode", y="value", color="metric", facet_row="section", violinmode="overlay")
+        fig.update_yaxes(matches=None)
+        #bdf = bdf.drop_duplicates(subset=['stratipcode'])
+        #fig.add_bar(x=bdf["stratipcode"], y=bdf['sample size'], name="Sample Size", row=1, col=1)
+        fig.add_hline(
+            y=0,
+            line_dash="solid",
+            line_color="grey",
+            line_width=2.5)
+        # truncate long xtick labels
+        fig.update_layout(
+            xaxis={
+             'tickmode': 'array',
+             'tickvals': bdf['stratipcode'].tolist(),
+             'ticktext': [(i[:17] + '...') for i in bdf['stratipcode']],
+            })
+        fig.update_layout(height=1000, transition_duration=500, legend_title_text='Legend', hovermode=hovermode, uirevision='some-constant')
+        return fig
