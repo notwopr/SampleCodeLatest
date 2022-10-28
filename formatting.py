@@ -18,7 +18,7 @@ paper_color = 'paper'
 wallpaper_color = ''
 
 # font
-banner_text = 'fw-bold darkgrey_txt display-1 font_banner'
+banner_text = 'fw-bold display-1 font_banner'
 text_dark_thick = 'fw-bold charcoal_txt display-3'
 format_heading_txt = 'fw-bold font_heading display-5'
 helpful_note_value = 'fadedpurple_txt'
@@ -38,7 +38,11 @@ format_navbar = f'{format_success_global} hstack gap-3'
 format_top = f'{format_success_global}'
 format_main = f'{format_success_global}'
 format_footer = f'{format_success_global}'
+
 format_banner = f'{banner_text} w-100 text-end'
+format_banner_alt1 = 'darkgrey_txt'
+format_banner_alt2 = 'alt2_txt'
+
 format_loginbody = 'position-absolute top-50 start-50 translate-middle'
 format_loginbody_elements = 'hstack gap-3'
 format_stats_leftcols = 'pe-3'

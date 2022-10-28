@@ -22,11 +22,28 @@ from webapp.router_directory import retrieve_bot_content, bpdict
 from webapp.html_dash import gen_htmltable, gen_trlist_from_dict_footer
 from file_functions import readpkl
 from webapp.dashinputs import dash_inputbuilder
-from formatting import format_loginbody, format_loginbody_elements, format_footer, format_main, format_top, format_navbar, format_banner, format_heading_txt, formaltextinput, format_logincopyright, format_stats_livestatus
+from formatting import format_loginbody, format_loginbody_elements, format_footer, format_main, format_top, format_navbar, format_banner, format_heading_txt, formaltextinput, format_logincopyright, format_stats_livestatus, format_banner_alt1
 from file_hierarchy import DirPaths
 from machinesettings import _machine
+from webapp.colors import ColorGenerator
+
 
 coname = 'climb.'
+
+
+def gen_banner():
+    banner_base = ColorGenerator().gen_random_hex()
+    banner_alt = ColorGenerator().gen_random_hex()
+    coname_banner = [
+        html.Span(coname[:1], style={"color": banner_base}),
+        html.Span(coname[1:2], style={"color": banner_alt}),
+        html.Span(coname[2:3], style={"color": banner_base}),
+        html.Span(coname[3:4], style={"color": banner_alt}),
+        html.Span(coname[4:5], style={"color": banner_base}),
+        html.Span(coname[5:], style={"color": banner_alt})
+        ]
+    return coname_banner
+
 
 # navbar assets
 logout = dash_inputbuilder({
@@ -44,7 +61,7 @@ success = html.Div([
     html.Div([
         html.Div(logout, id='logout'),
         html.Div(tomain, id='tomain'),
-        html.Div(coname, id='banner', className=format_banner)
+        html.Div(id='banner', className=format_banner)
         ], id='navbar', className=format_navbar),
     html.Div(id='top-content', className=format_top),
     html.Div(id='main-content', className=format_main),
@@ -94,28 +111,30 @@ app.layout = html.Div([
     Output('pw-check', 'children'),
     Output('pwd-box', 'value'),
     Output('login_copyright', 'hidden'),
+    Output('banner', 'children'),
     Input('login-button', 'n_clicks'),
     Input('pwd-box', 'value'),
     Input('logout-button', 'n_clicks'),
     Input('tomain-button', 'n_clicks')
     )
 def successful(login_clicks, pw, logout_clicks, main_clicks):
-    return '/', 'hidden', None, None, '', 'hidden'
+
+    return '/', 'hidden', None, None, '', 'hidden', gen_banner()
     # if callback_context.triggered[0]['prop_id'] == 'login-button.n_clicks':
     #     if pw == readpkl('auth', Path(DirPaths().auth)):
-    #         return '/', 'hidden', None, None, '', 'hidden'
+    #         return '/', 'hidden', None, None, '', 'hidden', gen_banner()
     #     elif pw:
-    #         return '/', None, 'hidden', 'INVALID ENTRY', pw, None
+    #         return '/', None, 'hidden', 'INVALID ENTRY', pw, None, gen_banner()
     #     else:
     #         return dash.no_update
     # elif callback_context.triggered[0]['prop_id'] == 'logout-button.n_clicks':
-    #     return '/', None, 'hidden', None, '', None
+    #     return '/', None, 'hidden', None, '', None, gen_banner()
     # elif callback_context.triggered[0]['prop_id'] == 'tomain-button.n_clicks':
-    #     return '/', 'hidden', None, None, '', 'hidden'
+    #     return '/', 'hidden', None, None, '', 'hidden', gen_banner()
     # elif pw == '':
-    #     return '/', None, 'hidden', None, pw, None
+    #     return '/', None, 'hidden', None, pw, None, gen_banner()
     # else:
-    #     return '/', None, 'hidden', None, pw, None
+    #     return '/', None, 'hidden', None, pw, None, gen_banner()
 
 
 # Update top content
@@ -156,6 +175,7 @@ def gen_main_content(pathname):
             ])
     else:
         return 'PAGE NOT FOUND!'
+
 
 # Update countdown timer
 js_counter = """
