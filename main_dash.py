@@ -118,23 +118,24 @@ app.layout = html.Div([
     Input('tomain-button', 'n_clicks')
     )
 def successful(login_clicks, pw, logout_clicks, main_clicks):
-
-    return '/', 'hidden', None, None, '', 'hidden', gen_banner()
-    # if callback_context.triggered[0]['prop_id'] == 'login-button.n_clicks':
-    #     if pw == readpkl('auth', Path(DirPaths().auth)):
-    #         return '/', 'hidden', None, None, '', 'hidden', gen_banner()
-    #     elif pw:
-    #         return '/', None, 'hidden', 'INVALID ENTRY', pw, None, gen_banner()
-    #     else:
-    #         return dash.no_update
-    # elif callback_context.triggered[0]['prop_id'] == 'logout-button.n_clicks':
-    #     return '/', None, 'hidden', None, '', None, gen_banner()
-    # elif callback_context.triggered[0]['prop_id'] == 'tomain-button.n_clicks':
-    #     return '/', 'hidden', None, None, '', 'hidden', gen_banner()
-    # elif pw == '':
-    #     return '/', None, 'hidden', None, pw, None, gen_banner()
-    # else:
-    #     return '/', None, 'hidden', None, pw, None, gen_banner()
+    if _machine.machinename == 'awsbeanstalk':
+        if callback_context.triggered[0]['prop_id'] == 'login-button.n_clicks':
+            if pw == readpkl('auth', Path(DirPaths().auth)):
+                return '/', 'hidden', None, None, '', 'hidden', gen_banner()
+            elif pw:
+                return '/', None, 'hidden', 'INVALID ENTRY', pw, None, gen_banner()
+            else:
+                return dash.no_update
+        elif callback_context.triggered[0]['prop_id'] == 'logout-button.n_clicks':
+            return '/', None, 'hidden', None, '', None, gen_banner()
+        elif callback_context.triggered[0]['prop_id'] == 'tomain-button.n_clicks':
+            return '/', 'hidden', None, None, '', 'hidden', gen_banner()
+        elif pw == '':
+            return '/', None, 'hidden', None, pw, None, gen_banner()
+        else:
+            return '/', None, 'hidden', None, pw, None, gen_banner()
+    else:
+        return '/', 'hidden', None, None, '', 'hidden', gen_banner()
 
 
 # Update top content

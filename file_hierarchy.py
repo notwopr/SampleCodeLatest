@@ -72,8 +72,6 @@ class DirPaths:
     full_info_db = join_str([stockdata, 'fullinfodb'])
     # DATABASES
     dbparent = join_str([dataroot, 'DATABASES'])
-    # winlose tester
-    winlosetester = join_str([dataroot, 'WINLOSETESTER'])
     # strattester
     strattester = join_str([dataroot, 'STRATTESTER'])
     strattester_testruns = join_str([strattester, 'STRATTESTER_TESTRUNS'])
