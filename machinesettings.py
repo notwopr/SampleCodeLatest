@@ -49,7 +49,7 @@ class Machine():
         },
         'aws-beanstalk': {
             'name': 'awsbeanstalk',
-            'dataroot': '/efs',  # '/efs/CLIMB_DATA'  '/home/ec2-user/environment/EBS',
+            'dataroot': '/efs/CLIMB_DATA',  # '/efs/CLIMB_DATA'  '/home/ec2-user/environment/EBS',
             'numcore_offset': 0
         }
     }
