@@ -47,6 +47,7 @@ from webapp.routers.strattester_helper_leaderboard_colconfig import nonrankcols,
 from webapp.ranking_helper import gen_rankconfig_htmlchildren
 from formatting import format_tabs
 from file_hierarchy import DirPaths
+from machinesettings import _machine
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -319,6 +320,18 @@ def preview_inputs(strat, period, num_periods, start_date, min_age, benchmark, s
     if all(i is not None for i in [strat, period, num_periods, start_date, min_age, benchmark, startcapital, rankstart, rankend]):
         setting_summary += [html.P(f"Given the settings you chose, the strategy {strat} will be run for {num_periods} consecutive periods of {period} days each starting on {start_date} and finishing on {end_date}.  At the beginning of each period, the chosen strategy will be run on the universe of stocks existing at that point in time.  The strategy will produce a ranking of stocks for that period.  Stocks ranked from {rankstart} to {rankend} for that period will comprise the portfolio to be invested for that period.  Then, at the end of the period, the portfolio positions are exited, and the process starts again for the next period.  The strategy's performance will be measured against the chosen benchmark {benchmark}.  Once all periods have been processed, an overall performance summary will be given.  The minimum age a stock must be for the strategy to invest in it is {min_age} days old.")]
     return setting_summary
+
+
+# update stock data
+@app.callback(
+    Output(f'submitbutton_{bp.botid}', 'disabled'),
+    Input(f'submitbutton_{bp.botid}', 'n_clicks'),
+    )
+def update_stockdata(n_clicks):
+    if _machine.machinename == 'awsbeanstalk':
+        return True
+    else:
+        return False
 
 
 @app.callback(

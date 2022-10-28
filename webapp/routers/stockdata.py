@@ -28,6 +28,7 @@ from formatting import format_tabs
 from file_functions import readpkl
 from file_hierarchy import DirPaths, FileNames
 from webapp.servernotes import getlastmodified
+from machinesettings import _machine
 
 FULL_INFO_DB = Path(DirPaths().full_info_db)
 daterangedb_name = FileNames().fn_daterangedb
@@ -66,6 +67,18 @@ layout = html.Div([
             ], className=format_tabs)
     ])
 ])
+
+
+# update stock data
+@app.callback(
+    Output(f'updatebutton_{bp.botid}', 'disabled'),
+    Input(f'updatebutton_{bp.botid}', 'n_clicks'),
+    )
+def update_stockdata(n_clicks):
+    if _machine.machinename == 'awsbeanstalk':
+        return True
+    else:
+        return False
 
 
 # update stock data

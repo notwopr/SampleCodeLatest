@@ -22,7 +22,7 @@ from webapp.router_directory import retrieve_bot_content, bpdict
 from webapp.html_dash import gen_htmltable, gen_trlist_from_dict_footer
 from file_functions import readpkl
 from webapp.dashinputs import dash_inputbuilder
-from formatting import format_loginbody, format_loginbody_elements, format_footer, format_main, format_top, format_navbar, format_banner, format_heading_txt, formaltextinput, format_logincopyright, format_stats_livestatus, format_banner_alt1
+from formatting import format_loginbody, format_loginbody_elements, format_footer, format_main, format_top, format_navbar, format_banner, format_heading_txt, formaltextinput, format_logincopyright, format_stats_livestatus
 from file_hierarchy import DirPaths
 from machinesettings import _machine
 from webapp.colors import ColorGenerator
