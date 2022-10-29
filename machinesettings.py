@@ -61,13 +61,13 @@ class Machine():
         except AttributeError:
             compid = platform.uname()[1]
 
-        # check if machine has been registered
-        if compid not in self.__machineprofiles:
-            raise ValueError("This machine has not been configured to be used with this software.")
-
         # check if machine is on AWS
         if "us-west-1" in compid:
             compid = "aws-beanstalk"
+            
+        # check if machine has been registered
+        if compid not in self.__machineprofiles:
+            raise ValueError("This machine has not been configured to be used with this software.")
 
         # set machine-specific variables
         self.machinename = self.__machineprofiles[compid]['name']
