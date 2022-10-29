@@ -40,7 +40,9 @@ class IngredientSettingsDatabase:
         ('compmode', 'm2', 'string', 'choices', ['first', 'last']),
         ('firstval', 'm3', 'string', 'choices', ['min', 'max', 'first', 'last']),
         ('secondval', 'm4', 'string', 'choices', ['min', 'max', 'first', 'last']),
-        ('seglenmode', 'm5', 'string', 'choices', ['flat', 'positive', 'negative'])
+        ('seglenmode', 'm5', 'string', 'choices', ['flat', 'positive', 'negative']),
+        ('changetype', 'm6', 'string', 'choices', ['pos', 'neg']),
+        ('accret_type', 'm7', 'string', 'choices', ['pos', 'neg', 'zero']),
     ]
 
     def __init__(self):

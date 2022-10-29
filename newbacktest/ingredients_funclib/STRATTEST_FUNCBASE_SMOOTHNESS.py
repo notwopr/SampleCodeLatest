@@ -13,33 +13,31 @@ Purpose: Most of the functions that relate to smoothness.
 #   LOCAL APPLICATION IMPORTS
 
 
+def accretionbooleanresults(accret_type, seriesdata):
+    '''# return datadf with accretion boolean results'''
+    if accret_type == 'pos':
+        return seriesdata > seriesdata.shift(1)
+    elif accret_type == 'neg':
+        return seriesdata < seriesdata.shift(1)
+    elif accret_type == 'zero':
+        return seriesdata == seriesdata.shift(1)
+
+
+def accretionscore_single(accret_type, seriesdata):
+    '''# check if each successive data point is greater than the previous'''
+    accretiontally = accretionbooleanresults(accret_type, seriesdata)
+    return accretiontally.iloc[1:].mean()
+
+
+'''UNREVISED CODE'''
+
+
 # check if slope is positive
 def positiveslope_single(datadf, focuscol):
     firstdatapoint = datadf.iloc[0][focuscol]
     lastdatapoint = datadf.iloc[-1][focuscol]
     positiveslope = lastdatapoint - firstdatapoint
     return positiveslope
-
-
-# return datadf with accretion boolean results
-def accretionbooleanresults(datadf, focuscol, accret_type):
-    # reset index numbers to zero
-    datadf.reset_index(drop=True, inplace=True)
-    # create boolean column for if current val > prev val
-    if accret_type == 'pos':
-        datadf[f'{focuscol}_{accret_type}'] = datadf[focuscol] > datadf[focuscol].shift(1)
-    elif accret_type == 'neg':
-        datadf[f'{focuscol}_{accret_type}'] = datadf[focuscol] < datadf[focuscol].shift(1)
-    elif accret_type == 'zero':
-        datadf[f'{focuscol}_{accret_type}'] = datadf[focuscol] == datadf[focuscol].shift(1)
-    return datadf
-
-
-# check if each successive data point is greater than the previous
-def accretionscore_single(datadf, focuscol, accret_type):
-    datadf = accretionbooleanresults(datadf, focuscol, accret_type)
-    accretionscore = datadf[f'{focuscol}_{accret_type}'][1:].mean()
-    return accretionscore
 
 
 # keeps running tally of next datapoint > previous data point.  if less than, subtract from total score.

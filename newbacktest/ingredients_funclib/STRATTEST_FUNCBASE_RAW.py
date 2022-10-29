@@ -228,7 +228,52 @@ def statseglen_single(seglenmode, stat_type, seriesdata):
         return np.sum(getallseglens(seriesdata, seglenmode))
 
 
+def getposornegchangesonly(seriesdata, changetype):
+    '''# RETURN POS OR NEG SAMPLES OF SET OF DAILY PERCENT CHANGES'''
+    daily_changes = np.array(seriesdata)
+    if changetype == 'pos':
+        iso_samps = daily_changes[daily_changes > 0]
+    elif changetype == 'neg':
+        iso_samps = daily_changes[daily_changes < 0]
+    return iso_samps
+
+
+# GET STATS ON SET OF POS OR NEG SAMPLES
+def isosampstats(iso_samps, stat_type):
+    if len(iso_samps) == 0:
+        return 0
+    else:
+        if stat_type == 'mean':
+            return np.mean(iso_samps)
+        elif stat_type == 'median':
+            return np.median(iso_samps)
+        elif stat_type == 'avg':
+            mean_val = np.mean(iso_samps)
+            median_val = np.median(iso_samps)
+            return np.mean([mean_val, median_val])
+        elif stat_type == 'max':
+            return np.max(iso_samps)
+        elif stat_type == 'min':
+            return np.min(iso_samps)
+        elif stat_type == 'std':
+            return np.std(iso_samps)
+        elif stat_type == 'mad':
+            return stats.median_abs_deviation(iso_samps)
+        elif stat_type == 'dev':
+            std_val = np.std(iso_samps)
+            mad_val = stats.median_abs_deviation(iso_samps)
+            return np.mean([std_val, mad_val])
+
+
+# GET AVG CHANGE OF POS/NEG DAILY CHANGES
+def posnegmag_single(changetype, stat_type, seriesdata):
+    iso_samps = getposornegchangesonly(seriesdata, changetype)
+    return isosampstats(iso_samps, stat_type)
+
+
 '''UNEDITED CODE'''
+
+
 # returns all candidates for type of price specified
 def getpricedate_occurcandidates_single(prices, stock, pricetype):
     return prices[prices[stock] == globalpricegrab_single(prices, stock, pricetype)]['date']
@@ -367,51 +412,6 @@ def prevalencetrend_single(prices, stock, changewinsize, changetype):
     else:
         prevalencetrend = 0
     return prevalencetrend
-
-
-# RETURN POS OR NEG SAMPLES OF SET OF DAILY PERCENT CHANGES
-def getposornegchangesonly(daily_changes, changetype):
-    daily_changes = np.array(daily_changes)
-    if changetype == 'pos':
-        iso_samps = daily_changes[daily_changes > 0]
-    elif changetype == 'neg':
-        iso_samps = daily_changes[daily_changes < 0]
-    return iso_samps
-
-
-# GET STATS ON SET OF POS OR NEG SAMPLES
-def isosampstats(iso_samps, stat_type):
-    if len(iso_samps) == 0:
-        answer = 0
-    else:
-        if stat_type == 'mean':
-            answer = np.mean(iso_samps)
-        elif stat_type == 'median':
-            answer = np.median(iso_samps)
-        elif stat_type == 'avg':
-            mean_val = np.mean(iso_samps)
-            median_val = np.median(iso_samps)
-            answer = np.mean([mean_val, median_val])
-        elif stat_type == 'max':
-            answer = np.max(iso_samps)
-        elif stat_type == 'min':
-            answer = np.min(iso_samps)
-        elif stat_type == 'std':
-            answer = np.std(iso_samps)
-        elif stat_type == 'mad':
-            answer = stats.median_abs_deviation(iso_samps)
-        elif stat_type == 'dev':
-            std_val = np.std(iso_samps)
-            mad_val = stats.median_abs_deviation(iso_samps)
-            answer = np.mean([std_val, mad_val])
-    return answer
-
-
-# GET AVG CHANGE OF POS/NEG DAILY CHANGES
-def posnegmag_single(daily_changes, changetype, stat_type):
-    iso_samps = getposornegchangesonly(daily_changes, changetype)
-    answer = isosampstats(iso_samps, stat_type)
-    return answer
 
 
 # get ratio of positive mag to negative magnitude
