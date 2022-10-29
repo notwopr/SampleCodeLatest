@@ -25,10 +25,10 @@ from newbacktest.cloudgrapher.cloudsampgenerator import CloudSampleGenerator
 from newbacktest.symbology.cloudsampcode import CloudSampCode
 import datetime as dt
 import math
-total = 20312.31
-print(type(round(total)))
-exit()
-csc = 'CDTG|0$s#::0a:70::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::2a:1::2b:d::2c:percentile.IP.5.360.0.5.2000-10-24'
+# total = 20312.31
+# print(type(round(total)))
+# exit()
+# csc = 'CDTG|0$s#::0a:70::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::2a:1::2b:d::2c:percentile.IP.5.360.0.5.2000-10-24'
 # print(CloudSampCode().decode(csc)['stratipcode'])
 # exit()
 if __name__ == '__main__':
@@ -47,22 +47,90 @@ if __name__ == '__main__':
     ]
     strategydict = [
         [
+            # {
+            #     'metricfunc': 'slopescorefocus_single',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'd'
+            # }
+            # {
+            #     'metricfunc': 'unifatshell_single',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'a',
+            #     'focuscol': 'raw',
+            #     'idealcol': 'baremax',
+            #     'stat_type': 'avg',
+            # },
+            # {
+            #     'metricfunc': 'unifatvolscorebmin_single',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'a'
+            # }
             {
-                'metricfunc': 'drawdown_to_ipotoathdiff_single',
-                # 'filterdirection': '>',
+                'metricfunc': 'statseglen_single',
                 'sourcedata': 'eodprices',
                 'nantreatment': 'ffillandremove',
-                # 'threshold_type': 'byvalue',
-                # 'threshold_value': 0,
-                # 'filterby': 'value',
                 'look_back': 0,
-                'curvetype': 'raw',
+                'curvetype': 'ppc_baremax',
                 'weight': 1,
                 'ranktype': 'percentile',
-                'rankdirection': 'd'
-                # 'occurtype': 'last',
-                # 'compmode': 'last'
-            }
+                'rankdirection': 'a',
+                'seglenmode': 'flat',
+                'stat_type': 'max',
+            },
+            # {
+            #     'metricfunc': 'allpctdrops_single',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'd',
+            #     'uppercol': 'baremax',
+            #     'lowercol': 'raw',
+            #     'stat_type': 'min',
+            # },
+            # {
+            #     'metricfunc': 'slopetounifatratiobmin_single',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'd'
+            # }
+            # {
+            #     'metricfunc': 'drawdown_to_ipotoathdiff_single',
+            #     # 'filterdirection': '>',
+            #     'sourcedata': 'eodprices',
+            #     'nantreatment': 'ffillandremove',
+            #     # 'threshold_type': 'byvalue',
+            #     # 'threshold_value': 0,
+            #     # 'filterby': 'value',
+            #     'look_back': 0,
+            #     'curvetype': 'raw',
+            #     'weight': 1,
+            #     'ranktype': 'percentile',
+            #     'rankdirection': 'd'
+            #     # 'occurtype': 'last',
+            #     # 'compmode': 'last'
+            # }
         ]
     ]
     strategydict2 = [
@@ -108,7 +176,7 @@ if __name__ == '__main__':
     portsize = 5
     batchstart = 0
 
-    CloudSampleGenerator().generate(strategydict2, periodlen, portsize, batchstart, 1, num_periods)
+    CloudSampleGenerator().generate(strategydict, periodlen, portsize, batchstart, 1, num_periods)
     exit()
     # sampcode = 'SCTG|0$f#::0a:123::0b:eodprices::0c:0::0d:raw::0e:ffillandremove::f1:value::f2:0.002::f4:byvalue::f6:<=::m1:first::m2:last.IP.10.360.0.1.2017-06-05'
     # scobj = SampCode().decode(sampcode)

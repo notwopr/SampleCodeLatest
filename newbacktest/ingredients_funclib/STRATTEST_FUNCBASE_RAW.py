@@ -27,6 +27,25 @@ from Modules.price_history import grabsinglehistory
 from Modules.price_history_fillgaps import fill_gaps2
 from newbacktest.ingredients_funclib.STRATTEST_FUNCBASE import cleanchanges
 from Modules.growthcalcbot import removeleadingzeroprices
+from newbacktest.growthcalculator import GrowthCalculator
+
+
+# slopescore but custom choose column
+def slopescorefocus_single(seriesdata):
+    age = age_single(seriesdata)
+    # if first price is zero, get first nonzero price
+    seriesdata = GrowthCalculator().replaceleadzeros(seriesdata)
+    firstp = globalvalgrab_single('first', seriesdata)
+    lastp = globalvalgrab_single('last', seriesdata)
+    # # if first price is zero, get first nonzero price
+    # i = 1
+    # while firstp == 0 and i < len(seriesdata):
+    #     firstp = prices.iloc[i][focuscol]
+    #     i += 1
+    if firstp != 0 and age != 0:
+        return ((lastp/firstp) ** (1 / age)) - 1
+    else:
+        return 0
 
 
 def globalvalgrab_single(valtype, seriesdata):
@@ -62,33 +81,19 @@ def drawdown_to_ipotoathdiff_single(seriesdata):
     return drawdowndiff / ipotoathdiff
 
 
-# returns all candidates for type of price specified
-def getpricedate_occurcandidates_single(prices, stock, pricetype):
-    return prices[prices[stock] == globalpricegrab_single(prices, stock, pricetype)]['date']
+# get pctchange between two dates:
+def getpctchange_single(seriesdata):
 
-
-# returns date of the type of occurrence of type of price specified
-def getpricedate_single(prices, stock, pricetype, occurtype):
-    if pricetype == 'first':
-        return prices['date'].iloc[0]
-    elif pricetype == 'last':
-        return prices['date'].iloc[-1]
-    else:
-        hits = getpricedate_occurcandidates_single(prices, stock, pricetype)
-        if occurtype == 'first':
-            return hits.iloc[0] if len(hits) > 1 else hits.item()
-        elif occurtype == 'last':
-            return hits.iloc[-1] if len(hits) > 1 else hits.item()
-
-
-# get ratio of global min price to ipo price
-def atltoipo_single(prices, stock):
-    # get global min price
-    minprice = globalpricegrab_single(prices, stock, 'min')
-    # get ipo price
-    ipoprice = globalpricegrab_single(prices, stock, 'first')
-    # get ratio
-    return minprice / ipoprice
+    firstp = globalvalgrab_single('first', seriesdata)
+    lastp = globalvalgrab_single('last', seriesdata)
+    try:
+        if firstp != 0 and not np.isnan(firstp) and not np.isnan(lastp):
+            return (lastp - firstp) / firstp
+        else:
+            return np.nan
+    except TypeError:
+        print(seriesdata)
+        print(firstp)
 
 
 def xtoathdiff_single(compmode, seriesdata):
@@ -157,26 +162,109 @@ def currtoathslope_to_ipotoathslope(occurtype, seriesdata):
     return abs(slope_currtoath) / slope_ipotoath
 
 
+# AGE
+def age_single(seriesdata):
+    return len(seriesdata) - 1
+
+
+def getallseglens(seriesdata, seglenmode):
+    '''gives an array of lengths of segments in a time-series.  if mode e.g. is positive, it will give you the segment lengths of consecutive positive daily pct-changes over the entire series. if the mode is flat, it will return the lengths of all flat segments in the time-series.'''
+    allseglens = []
+    single_seg = 0
+    # FOR EACH CHANGE...
+    # count = 0
+    for sample in seriesdata:
+        # IF SAMPLE IS POS/NEG/FLAT, ADD TO TALLY
+        if seglenmode == 'positive':
+            condstat = operator.gt(sample, 0)
+        elif seglenmode == 'negative':
+            condstat = operator.lt(sample, 0)
+        elif seglenmode == 'flat':
+            condstat = operator.eq(sample, 0)
+        if condstat is True:
+            single_seg += 1
+        # IF SAMPLE IS NOT POS/NEG/FLAT,
+        else:
+            # CLOSE TALLY AND SAVE
+            if single_seg > 0:
+                allseglens.append(single_seg)
+            # RESET TALLY TO ZERO
+            single_seg = 0
+        # count += 1
+    # IF REACH END OF ALL SAMPLES, RECORD LAST TALLY IF ANY
+    if single_seg > 0:
+        allseglens.append(single_seg)
+    # IF NO POS/NEG/FLAT SEGS FOUND, RETURN LIST WITH VALUE OF ZERO
+    return [0] if len(allseglens) == 0 else allseglens
+
+
+# get avg/mean/median/max pos/neg/flat seg len
+def statseglen_single(seglenmode, stat_type, seriesdata):
+    if stat_type == 'mean':
+        return np.mean(getallseglens(seriesdata, seglenmode))
+    elif stat_type == 'median':
+        return np.median(getallseglens(seriesdata, seglenmode))
+    elif stat_type == 'avg':
+        meanseglen = np.mean(getallseglens(seriesdata, seglenmode))
+        medianseglen = np.median(getallseglens(seriesdata, seglenmode))
+        return np.mean([medianseglen, meanseglen])
+    elif stat_type == 'max':
+        return np.max(getallseglens(seriesdata, seglenmode))
+    elif stat_type == 'min':
+        return np.min(getallseglens(seriesdata, seglenmode))
+    elif stat_type == '1q':
+        return np.quantile(getallseglens(seriesdata, seglenmode), .25)
+    elif stat_type == '3q':
+        return np.quantile(getallseglens(seriesdata, seglenmode), .75)
+    elif stat_type == 'std':
+        return np.std(getallseglens(seriesdata, seglenmode))
+    elif stat_type == 'mad':
+        return stats.median_abs_deviation(getallseglens(seriesdata, seglenmode))
+    elif stat_type == 'dev':
+        stdseglen = np.std(getallseglens(seriesdata, seglenmode))
+        madseglen = stats.median_abs_deviation(getallseglens(seriesdata, seglenmode))
+        return np.mean([stdseglen, madseglen])
+    elif stat_type == 'sum':
+        return np.sum(getallseglens(seriesdata, seglenmode))
+
+
+'''UNEDITED CODE'''
+# returns all candidates for type of price specified
+def getpricedate_occurcandidates_single(prices, stock, pricetype):
+    return prices[prices[stock] == globalpricegrab_single(prices, stock, pricetype)]['date']
+
+
+# returns date of the type of occurrence of type of price specified
+def getpricedate_single(prices, stock, pricetype, occurtype):
+    if pricetype == 'first':
+        return prices['date'].iloc[0]
+    elif pricetype == 'last':
+        return prices['date'].iloc[-1]
+    else:
+        hits = getpricedate_occurcandidates_single(prices, stock, pricetype)
+        if occurtype == 'first':
+            return hits.iloc[0] if len(hits) > 1 else hits.item()
+        elif occurtype == 'last':
+            return hits.iloc[-1] if len(hits) > 1 else hits.item()
+
+
+# get ratio of global min price to ipo price
+def atltoipo_single(prices, stock):
+    # get global min price
+    minprice = globalpricegrab_single(prices, stock, 'min')
+    # get ipo price
+    ipoprice = globalpricegrab_single(prices, stock, 'first')
+    # get ratio
+    return minprice / ipoprice
+
+
+
 # get num days between current price and most recent ATH
 def currtoathdays_single(prices, stock, ath_occur):
     currdate = getpricedate_single(prices, stock, 'last', 'last')
     athdate = getpricedate_single(prices, stock, 'max', ath_occur)
     return DateOperations().num_days(athdate, currdate)
 
-
-# get pctchange between two dates:
-def getpctchange_single(seriesdata):
-
-    firstp = globalvalgrab_single('first', seriesdata)
-    lastp = globalvalgrab_single('last', seriesdata)
-    try:
-        if firstp != 0 and not np.isnan(firstp) and not np.isnan(lastp):
-            return (lastp - firstp) / firstp
-        else:
-            return np.nan
-    except TypeError:
-        print(seriesdata)
-        print(firstp)
 
 
 # CALCULATE POS NEG AREA BETWEEN TWO NORMALIZED GRAPHS
@@ -220,11 +308,6 @@ def paratio_single(prices, stock):
     currprice = globalpricegrab_single(prices, stock, 'last')
     paratio = currprice / age
     return paratio
-
-
-# AGE
-def age_single(seriesdata):
-    return len(seriesdata) - 1
 
 
 # CALCULATE WHETHER MORE POS THAN NEG AREA
@@ -409,23 +492,6 @@ def slopescore_single(prices):
     i = 1
     while firstp == 0 and i < len(prices):
         firstp = prices.iat[i, 1]
-        i += 1
-    if firstp != 0:
-        slopescore = ((lastp/firstp) ** (1 / age)) - 1
-    else:
-        slopescore = 0
-    return slopescore
-
-
-# slopescore but custom choose column
-def slopescorefocus_single(prices, focuscol):
-    age = len(prices) - 1
-    firstp = prices.iloc[0][focuscol]
-    lastp = prices.iloc[-1][focuscol]
-    # if first price is zero, get first nonzero price
-    i = 1
-    while firstp == 0 and i < len(prices):
-        firstp = prices.iloc[i][focuscol]
         i += 1
     if firstp != 0:
         slopescore = ((lastp/firstp) ** (1 / age)) - 1
@@ -712,69 +778,6 @@ def flatline_single(daily_changes):
     else:
         flatlinescore = np.nan
     return flatlinescore
-
-
-def getallseglens(daily_changes, mode):
-    allseglens = []
-    single_seg = 0
-    # FOR EACH CHANGE...
-    count = 0
-    for sample in daily_changes:
-        # IF SAMPLE IS POS/NEG/FLAT, ADD TO TALLY
-        if mode == 'positive':
-            condstat = operator.gt(sample, 0)
-        elif mode == 'negative':
-            condstat = operator.lt(sample, 0)
-        elif mode == 'flat':
-            condstat = operator.eq(sample, 0)
-        if condstat is True:
-            single_seg += 1
-        # IF SAMPLE IS NOT POS/NEG/FLAT,
-        else:
-            # CLOSE TALLY AND SAVE
-            if single_seg > 0:
-                allseglens.append(single_seg)
-            # RESET TALLY TO ZERO
-            single_seg = 0
-        count += 1
-    # IF REACH END OF ALL SAMPLES, RECORD LAST TALLY IF ANY
-    if single_seg > 0:
-        allseglens.append(single_seg)
-    # IF NO POS/NEG/FLAT SEGS FOUND, RETURN LIST WITH VALUE OF ZERO
-    if len(allseglens) == 0:
-        allseglens = [0]
-    return allseglens
-
-
-# get avg/mean/median/max pos/neg/flat seg len
-def statseglen_single(daily_changes, mode, stat_type):
-    if stat_type == 'mean':
-        statseglen = np.mean(getallseglens(daily_changes, mode))
-    elif stat_type == 'median':
-        statseglen = np.median(getallseglens(daily_changes, mode))
-    elif stat_type == 'avg':
-        meanseglen = np.mean(getallseglens(daily_changes, mode))
-        medianseglen = np.median(getallseglens(daily_changes, mode))
-        statseglen = np.mean([medianseglen, meanseglen])
-    elif stat_type == 'max':
-        statseglen = np.max(getallseglens(daily_changes, mode))
-    elif stat_type == 'min':
-        statseglen = np.min(getallseglens(daily_changes, mode))
-    elif stat_type == '1q':
-        statseglen = np.quantile(getallseglens(daily_changes, mode), .25)
-    elif stat_type == '3q':
-        statseglen = np.quantile(getallseglens(daily_changes, mode), .75)
-    elif stat_type == 'std':
-        statseglen = np.std(getallseglens(daily_changes, mode))
-    elif stat_type == 'mad':
-        statseglen = stats.median_abs_deviation(getallseglens(daily_changes, mode))
-    elif stat_type == 'dev':
-        stdseglen = np.std(getallseglens(daily_changes, mode))
-        madseglen = stats.median_abs_deviation(getallseglens(daily_changes, mode))
-        statseglen = np.mean([stdseglen, madseglen])
-    elif stat_type == 'sum':
-        statseglen = np.sum(getallseglens(daily_changes, mode))
-    return statseglen
 
 
 # get avg/mean/median/max pos/neg/flat seg to life ratios

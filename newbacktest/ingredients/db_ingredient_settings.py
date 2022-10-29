@@ -27,10 +27,10 @@ class IngredientSettingsDatabase:
         ('threshold_type', 'f4', 'string', 'choices', ['byticker', 'bybestbench', 'byvalue']),
         ('threshold_bybestbench_better', 'f5', 'string', 'choices', ['bigger', 'smaller']),
         ('filterdirection', 'f6', 'string', 'choices', ['nofilter', '>', '>=', '<', '<=', '><', '><=', '>=<', '>=<=', '!=', '==']),
-        ('focuscol', 'c1', 'string', 'choices', ['rawprice', 'baremin', 'baremax', 'straight', 'trueline']),
-        ('idealcol', 'c2', 'string', 'choices', ['rawprice', 'baremin', 'baremax', 'straight', 'trueline']),
-        ('uppercol', 'c3', 'string', 'choices', ['rawprice', 'baremin', 'baremax', 'straight', 'trueline']),
-        ('lowercol', 'c4', 'string', 'choices', ['rawprice', 'baremin', 'baremax', 'straight', 'trueline']),
+        ('focuscol', 'c1', 'string', 'choices', ['raw', 'true', 'straight', 'baremin', 'baremax']),
+        ('idealcol', 'c2', 'string', 'choices', ['raw', 'true', 'straight', 'baremin', 'baremax']),
+        ('uppercol', 'c3', 'string', 'choices', ['raw', 'true', 'straight', 'baremin', 'baremax']),
+        ('lowercol', 'c4', 'string', 'choices', ['raw', 'true', 'straight', 'baremin', 'baremax']),
         ('stat_type', 'm1', 'string', 'choices', ['mean', 'median', 'avg', 'std', 'mad', 'dev', 'prev', 'min', 'max', 'sum', '1q', '3q']),
         ('ath_occur', 'rb1', 'string', 'choices', ['first', 'last']),
         # ath_occur designates how to calculate the preATH period.  'first' means take the date where the first ATH occur if there are several occurrences of the ATH price.  'last' means take the last occurrence.
@@ -39,7 +39,8 @@ class IngredientSettingsDatabase:
         ('occurtype', 'm1', 'string', 'choices', ['first', 'last']),
         ('compmode', 'm2', 'string', 'choices', ['first', 'last']),
         ('firstval', 'm3', 'string', 'choices', ['min', 'max', 'first', 'last']),
-        ('secondval', 'm4', 'string', 'choices', ['min', 'max', 'first', 'last'])
+        ('secondval', 'm4', 'string', 'choices', ['min', 'max', 'first', 'last']),
+        ('seglenmode', 'm5', 'string', 'choices', ['flat', 'positive', 'negative'])
     ]
 
     def __init__(self):

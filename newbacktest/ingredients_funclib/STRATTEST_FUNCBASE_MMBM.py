@@ -16,6 +16,7 @@ Version Notes:
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
 #   THIRD PARTY IMPORTS
+import scipy
 import numpy as np
 from scipy import stats
 #   LOCAL APPLICATION IMPORTS
@@ -24,6 +25,7 @@ from newbacktest.ingredients_funclib.STRATTEST_FUNCBASE import allpctchanges
 from newbacktest.ingredients_funclib.STRATTEST_FUNCBASE_RAW import getallseglens, slopescore_single, resampledslopescore_single, selectsampfreqslopescore_single, allsampfreqslopescore_single, slopescorefocus_single
 from Modules.price_calib import add_calibratedprices
 from Modules.price_history_slicing import pricedf_daterange, trimdfbydate
+from newbacktest.baking.curvetype import CurveType
 
 
 # calc stat on price series
@@ -41,10 +43,60 @@ def getstatval(priceseries, stat_type):
     elif stat_type == 'std':
         statval = priceseries.std()
     elif stat_type == 'mad':
-        statval = priceseries.mad()
+        statval = scipy.stats.median_abs_deviation(priceseries)#priceseries.mad()
     elif stat_type == 'dev':
-        statval = np.mean([priceseries.std(), priceseries.mad()])
+        statval = np.mean([priceseries.std(), scipy.stats.median_abs_deviation(priceseries)])#priceseries.mad()])
     return statval
+
+
+# RETURNS fatpct given two columns to compare but scaled to idealcol
+def unifatshell_single(focuscol, idealcol, stat_type, seriesdata):
+    focuscolseries = seriesdata if focuscol == 'raw' else CurveType().transform(seriesdata, 0, focuscol, 'removeall')
+    idealcolseries = seriesdata if idealcol == 'raw' else CurveType().transform(seriesdata, 0, idealcol, 'removeall')
+    return getstatval(abs(focuscolseries - idealcolseries) / idealcolseries, stat_type)
+
+
+# (unifatscore_rawbareminraw_avg + unifatscore_rawbareminraw_dev)
+def unifatvolscorebmin_single(seriesdata):
+    return unifatshell_single('raw', 'baremin', 'avg', seriesdata) + unifatshell_single('raw', 'baremin', 'dev', seriesdata)
+
+
+# Slopescore / (unifatscore_rawbareminraw_avg + unifatscore_rawbareminraw_dev)
+def slopetounifatratiobmin_single(seriesdata):
+    numerator = slopescorefocus_single(seriesdata)
+    denominator = unifatvolscorebmin_single(seriesdata)
+    if denominator != 0:
+        return numerator / abs(denominator)
+    else:
+        return np.nan
+
+
+# get nonzerodrops
+def getnonzerodrops(upperseries, lowerseries):
+    droparr = (lowerseries - upperseries) / upperseries
+    return droparr[droparr < 0]
+
+
+# get pct drop samples; use raw calibration only
+def getdropstat_single(nonzerodrops, stat_type, seriesdata):
+    if stat_type == 'prev':  # prev=prevalence
+        return len(nonzerodrops) / len(seriesdata)
+    else:
+        if len(nonzerodrops) != 0:
+            return getstatval(nonzerodrops, stat_type)
+        else:
+            return 0
+
+
+# get pct drop samples; use raw calibration only
+def allpctdrops_single(uppercol, lowercol, stat_type, seriesdata):
+    lowerseries = seriesdata if lowercol == 'raw' else CurveType().transform(seriesdata, 0, lowercol, 'removeall')
+    upperseries = seriesdata if uppercol == 'raw' else CurveType().transform(seriesdata, 0, uppercol, 'removeall')
+    nonzerodrops = getnonzerodrops(upperseries, lowerseries)
+    return getdropstat_single(nonzerodrops, stat_type, seriesdata)
+
+
+'''UNREVISED CODE'''
 
 
 # RETURNS fatpct given two columns to compare
@@ -58,35 +110,6 @@ def fatarea_single(prices, uppercol, lowercol, datarangecol):
 # same as unifatshell except numerator is raw, no absolute value
 def unifatshellraw_single(prices, focuscol, idealcol, stat_type):
     return getstatval((prices[focuscol] - prices[idealcol]) / prices[idealcol], stat_type)
-
-
-# RETURNS fatpct given two columns to compare but scaled to idealcol
-def unifatshell_single(prices, focuscol, idealcol, stat_type):
-    return getstatval(abs(prices[focuscol] - prices[idealcol]) / prices[idealcol], stat_type)
-
-
-# get nonzerodrops
-def getnonzerodrops(prices, uppercol, lowercol):
-    droparr = (prices[lowercol] - prices[uppercol]) / prices[uppercol]
-    return droparr[droparr < 0]
-
-
-# get pct drop samples; use raw calibration only
-def getdropstat_single(prices, nonzerodrops, stat_type):
-    if stat_type == 'prev':
-        metricscore = len(nonzerodrops) / len(prices)
-    else:
-        if len(nonzerodrops) != 0:
-            metricscore = getstatval(nonzerodrops, stat_type)
-        else:
-            metricscore = 0
-    return metricscore
-
-
-# get pct drop samples; use raw calibration only
-def allpctdrops_single(prices, uppercol, lowercol, stat_type):
-    nonzerodrops = getnonzerodrops(prices, uppercol, lowercol)
-    return getdropstat_single(prices, nonzerodrops, stat_type)
 
 
 # calc dropprev
@@ -272,26 +295,6 @@ def slopetounifatratio_single(prices, focuscol):
     numerator = slopescorefocus_single(prices, focuscol)
     # get unifatscore metrics
     denominator = unifatvolscore_single(prices, focuscol)
-    if denominator != 0:
-        answer = numerator / abs(denominator)
-    else:
-        answer = None
-    return answer
-
-
-# (unifatscore_rawbareminraw_avg + unifatscore_rawbareminraw_dev)
-def unifatvolscorebmin_single(prices, focuscol):
-    prices.reset_index(drop=True, inplace=True)
-    answer = unifatshell_single(prices, focuscol, 'oldbareminraw', 'avg') + unifatshell_single(prices, focuscol, 'oldbareminraw', 'dev')
-    return answer
-
-
-# Slopescore / (unifatscore_rawbareminraw_avg + unifatscore_rawbareminraw_dev)
-def slopetounifatratiobmin_single(prices, focuscol):
-    prices.reset_index(drop=True, inplace=True)
-    numerator = slopescorefocus_single(prices, focuscol)
-    # get unifatscore metrics
-    denominator = unifatvolscorebmin_single(prices, focuscol)
     if denominator != 0:
         answer = numerator / abs(denominator)
     else:

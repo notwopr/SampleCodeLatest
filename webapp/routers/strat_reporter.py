@@ -56,7 +56,7 @@ tbodydata = [
         'id': f'strat_{bp.botid}',
         'prompt': 'Select a Strategy to apply.',
         'inputtype': 'dropdown',
-        'options': [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()],  # stratlib.keys()],
+        'options': [],#[{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()],  # stratlib.keys()],
         'placeholder': 'Choose an existing Strat',
         'multi': False,
         'searchable': False,
@@ -230,6 +230,7 @@ def randomize_date(n_clicks):
 # get input summary
 @app.callback(
     Output(f'preview_{bp.botid}', "children"),
+    Output(f'strat_{bp.botid}', "options"),
     Input(f'strat_{bp.botid}', "value"),
     Input(f'datepicker_single_{bp.botid}', "date"),
     # Input(f'min_age_{bp.botid}', "value")
@@ -241,7 +242,7 @@ def preview_inputs(strat, date): #, min_age):
         #f'min_age: {min_age} days old'
         ]
     setting_summary = [html.P([html.Div([html.Span(i), html.Br()]) for i in setting_summary])]
-    return setting_summary
+    return setting_summary, [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()]
 
 
 # gen fullranking sourcetable
