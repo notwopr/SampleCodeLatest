@@ -60,11 +60,11 @@ class Machine():
             compid = platform.uname().node
         except AttributeError:
             compid = platform.uname()[1]
-
+        print(f"compid: {compid}")
         # check if machine is on AWS
         if "us-west-1" in compid:
             compid = "aws-beanstalk"
-            
+
         # check if machine has been registered
         if compid not in self.__machineprofiles:
             raise ValueError("This machine has not been configured to be used with this software.")
