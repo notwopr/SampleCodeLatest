@@ -26,7 +26,7 @@ import platform
 
 class Machine():
 
-    __machineprofiles = {
+    _machineprofiles = {
         'DESKTOP-JONUP29': {
             'name': 'surfacepro',
             'dataroot': 'C:/Users/david/David\'s Stuff/CLIMB_DATA',
@@ -60,21 +60,20 @@ class Machine():
             compid = platform.uname().node
         except AttributeError:
             compid = platform.uname()[1]
-        print(f"compid: {compid}")
         # check if machine is on AWS
         if "us-west-1" in compid:
             compid = "aws-beanstalk"
 
         # check if machine has been registered
-        if compid not in self.__machineprofiles:
+        if compid not in self._machineprofiles:
             raise ValueError("This machine has not been configured to be used with this software.")
 
         # set machine-specific variables
-        self.machinename = self.__machineprofiles[compid]['name']
-        self.dataroot = self.__machineprofiles[compid]['dataroot']
+        self.machinename = self._machineprofiles[compid]['name']
+        self.dataroot = self._machineprofiles[compid]['dataroot']
         # set number of available cpu cores
         num_cores = psutil.cpu_count(logical=True)
-        self.use_cores = num_cores - self.__machineprofiles[compid]['numcore_offset']
+        self.use_cores = num_cores - self._machineprofiles[compid]['numcore_offset']
 
 
 # instantiate machine
