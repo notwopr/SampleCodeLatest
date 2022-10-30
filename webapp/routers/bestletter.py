@@ -59,26 +59,27 @@ layout = html.Div([
             'inputtype': 'button_submit',
             })
     ], id=f'input_{bp.botid}'),
+    html.Br(),
     dcc.Tabs([
-        dcc.Tab(label='Statistics', children=[
+        dcc.Tab(html.Div(
             dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"letterstats_{bp.botid}"
-                })
-            ], className=format_tabs),
-        dcc.Tab(label='Visuals', children=[
-            html.Span([html.B('Hover Options:')]),
-            dash_inputbuilder({
-                'id': f'hovermode_{bp.botid}',
-                'prompt': 'Choose how you want to display data when you hover over the graph.',
-                'inputtype': 'radio',
-                'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
-                'value': 'closest',
-                'inline': 'inline'
-                }),
-            dcc.Graph(id=f'output_{bp.botid}'),
-            dcc.Graph(id=f'output_pie_{bp.botid}')
-            ], className=format_tabs)
+                }), className=format_tabs), label='Statistics'),
+        dcc.Tab(
+            html.Div([
+                html.Span([html.B('Hover Options:')]),
+                dash_inputbuilder({
+                    'id': f'hovermode_{bp.botid}',
+                    'prompt': 'Choose how you want to display data when you hover over the graph.',
+                    'inputtype': 'radio',
+                    'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
+                    'value': 'closest',
+                    'inline': 'inline'
+                    }),
+                dcc.Graph(id=f'output_{bp.botid}'),
+                dcc.Graph(id=f'output_pie_{bp.botid}')
+            ], className=format_tabs), label='Visuals')
     ])
 
 ])

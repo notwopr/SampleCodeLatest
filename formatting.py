@@ -49,7 +49,7 @@ format_stats_leftcols = 'pe-3'
 format_stats_rightcols = 'ps-3 text-info'
 format_stats_livestatus = 'ms-2 badge bg-success'
 # MISC ASSETS
-format_tabs = 'bg-white'
+format_tabs = 'p-4 bg-white'
 buttonclass = 'btn btn-outline-dark m-1'
 formaltextinput = 'border border-4 rounded-pill ps-3'
 textinputboxes = 'border border-1 rounded-3 ms-2 me-2 mb-1 mt-1 w-100'

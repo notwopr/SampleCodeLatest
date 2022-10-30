@@ -34,14 +34,13 @@ from ..os_functions import get_currentscript_filename
 from ..datatables import DataTableOperations
 from webapp.servernotes import getbenchdates
 from globalvars import benchmarks
-from Modules.price_history_slicing import pricedf_daterange
-from Modules.price_calib import convertpricearr, add_calibratedprices_portfolio
-from .pricehistoryexplorer_helper_diffcomp import add_comparisons_portfolio, add_pdiffpctchange_portfolio
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
 from formatting import format_htmltable_row, format_tabs
-benchmarkdata = getbenchdates(benchmarks)
+from .pricehistoryexplorer_helper_graphcomp import PriceExplorerHelperFunctions
+from .bestperformers2_helper_inputs import BestPerformerInputs
 
+benchmarkdata = getbenchdates(benchmarks)
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -67,386 +66,47 @@ tbodydata = [
         }
 ]
 
-growthrateinputs = [
-    {
-        'id': f'growthrate_{bp.botid}',
-        'prompt': 'Set growth rate threshold.  The threshold can be determined either by a specific number, by the growth rate of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_growthrate_{bp.botid}',
-        'prompt': 'Choose a ticker to be the growth rate threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_growthrate_{bp.botid}',
-        'prompt': 'Enter a growth rate threshold.',
-        'inputtype': 'number'
-        },
-    {
-        'id': f'growthrate_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the growth rate threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'growthrate_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the growthrate threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
+growthrateinputs = BestPerformerInputs(bp, tickers).growthrateinputs
+fatscore_baremaxtoraw_inputs = BestPerformerInputs(bp, tickers).fatscore_baremaxtoraw_inputs
+fatscore_baremaxtobaremin_inputs = BestPerformerInputs(bp, tickers).fatscore_baremaxtobaremin_inputs
+drop_mag_inputs = BestPerformerInputs(bp, tickers).drop_mag_inputs
+drop_prev_inputs = BestPerformerInputs(bp, tickers).drop_prev_inputs
+dropscore_inputs = BestPerformerInputs(bp, tickers).dropscore_inputs
+maxdd_inputs = BestPerformerInputs(bp, tickers).maxdd_inputs
+perf_graph_inputs = BestPerformerInputs(bp, tickers).perf_graph_inputs
+pdiffsettings = BestPerformerInputs(bp, tickers).pdiffsettings
+compsettings = BestPerformerInputs(bp, tickers).compsettings
 
-fatscore_baremaxtoraw_inputs = [
-    {
-        'id': f'fatscore_baremaxtoraw_{bp.botid}',
-        'prompt': 'Set fatscore_baremaxtoraw threshold.  The threshold can be determined either by a specific number, by the fatscore_baremaxtoraw of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_fatscore_baremaxtoraw_{bp.botid}',
-        'prompt': 'Choose a ticker to be the fatscore_baremaxtoraw threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_fatscore_baremaxtoraw_{bp.botid}',
-        'prompt': 'Enter a fatscore_baremaxtoraw threshold.',
-        'inputtype': 'number',
-        'max': 1,
-        'min': 0
-        },
-    {
-        'id': f'fatscore_baremaxtoraw_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the fatscore_baremaxtoraw threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'fatscore_baremaxtoraw_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the fatscore_baremaxtoraw threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
 
-fatscore_baremaxtobaremin_inputs = [
-    {
-        'id': f'fatscore_baremaxtobaremin_{bp.botid}',
-        'prompt': 'Set fatscore_baremaxtobaremin threshold.  The threshold can be determined either by a specific number, by the fatscore_baremaxtobaremin of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_fatscore_baremaxtobaremin_{bp.botid}',
-        'prompt': 'Choose a ticker to be the fatscore_baremaxtobaremin threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_fatscore_baremaxtobaremin_{bp.botid}',
-        'prompt': 'Enter a fatscore_baremaxtobaremin threshold.',
-        'inputtype': 'number',
-        'max': 1,
-        'min': 0
-        },
-    {
-        'id': f'fatscore_baremaxtobaremin_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the fatscore_baremaxtobaremin threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'fatscore_baremaxtobaremin_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the fatscore_baremaxtobaremin threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
-
-drop_mag_inputs = [
-    {
-        'id': f'drop_mag_{bp.botid}',
-        'prompt': 'Set drop_mag threshold.  The threshold can be determined either by a specific number, by the drop_mag of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_drop_mag_{bp.botid}',
-        'prompt': 'Choose a ticker to be the drop_mag threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_drop_mag_{bp.botid}',
-        'prompt': 'Enter a drop_mag threshold.',
-        'inputtype': 'number',
-        'max': 0,
-        'min': -1
-        },
-    {
-        'id': f'drop_mag_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the drop_mag threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'drop_mag_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the drop_mag threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
-
-drop_prev_inputs = [
-    {
-        'id': f'drop_prev_{bp.botid}',
-        'prompt': 'Set drop_prev threshold.  The threshold can be determined either by a specific number, by the drop_prev of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_drop_prev_{bp.botid}',
-        'prompt': 'Choose a ticker to be the drop_prev threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_drop_prev_{bp.botid}',
-        'prompt': 'Enter a drop_prev threshold.',
-        'inputtype': 'number',
-        'max': 1,
-        'min': 0
-        },
-    {
-        'id': f'drop_prev_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the drop_prev threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'drop_prev_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the drop_prev threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
-
-dropscore_inputs = [
-    {
-        'id': f'dropscore_{bp.botid}',
-        'prompt': 'Set dropscore threshold.  The threshold can be determined either by a specific number, by the dropscore of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_dropscore_{bp.botid}',
-        'prompt': 'Choose a ticker to be the dropscore threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_dropscore_{bp.botid}',
-        'prompt': 'Enter a dropscore threshold.',
-        'inputtype': 'number',
-        'max': 0,
-        'min': -1
-        },
-    {
-        'id': f'dropscore_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the dropscore threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'dropscore_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the dropscore threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
-
-maxdd_inputs = [
-    {
-        'id': f'maxdd_{bp.botid}',
-        'prompt': 'Set maxdd threshold.  The threshold can be determined either by a specific number, by the maxdd of another stock or benchmark, or the best performing benchmark.',
-        'options': [
-            {'label': 'By Ticker', 'value': 'byticker'},
-            {'label': 'By Best Benchmark', 'value': 'bybench'},
-            {'label': 'By specific number', 'value': 'bynumber'}
-        ],
-        'clearable': True,
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'byticker_maxdd_{bp.botid}',
-        'prompt': 'Choose a ticker to be the maxdd threshold.',
-        'inputtype': 'dropdown',
-        'options': tickers,
-        'placeholder': 'Select or Type a Ticker',
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'bynumber_maxdd_{bp.botid}',
-        'prompt': 'Enter a maxdd threshold.',
-        'inputtype': 'number',
-        'max': 0
-        },
-    {
-        'id': f'maxdd_filter_{bp.botid}',
-        'prompt': 'Keep stocks that are __ the maxdd threshold.',
-        'options': ['>', '>=', '<', '<='],
-        'inputtype': 'dropdown'
-        },
-    {
-        'id': f'maxdd_margin_{bp.botid}',
-        'prompt': 'By how much must a stock beat the maxdd threshold? This is added to the threshold value.  So if the filter direction is > or >= use a positive value.  If the filter direction is < or <=, use a negative value.',
-        'inputtype': 'number'
-        }
-        ]
-
-perf_graph_inputs = [
-    {
-        'id': f'perf_graph_ticker_{bp.botid}',
-        'prompt': 'Select tickers from the full ranking list that you want to see.',
-        'inputtype': 'dropdown',
-        'options': [],
-        'placeholder': 'Select or Search a Ticker(s)',
-        'multi': True,
-        'searchable': True,
-        'clearable': True
-        },
-    {
-        'id': f'calib_{bp.botid}',
-        'prompt': 'Select a calibration.  Absolute is where the y-axis is in $.  Normalized is where all prices are standardized to the same scale.',
-        'inputtype': 'radio',
-        'options': [
-            {'label': 'Absolute', 'value': 'absolute'},
-            {'label': 'Normalized', 'value': 'normalize'}
-        ],
-        'value': 'absolute',
-        'inline': 'inline'
-        },
-    {
-        'id': f'contour_{bp.botid}',
-        'prompt': 'Select whether you want to see the graphs in a different contour.',
-        'details': 'Baremax displays the current all-time high price.  Baremin displays the floor price.  Trueline displays the midpoint between baremax and baremin prices.  Straight displays the straight line from first to last price.',
-        'inputtype': 'checklist',
-        'options': [
-            {'label': 'Baremax', 'value': 'baremaxraw'},
-            {'label': 'Baremin', 'value': 'oldbareminraw'},
-            {'label': 'Trueline', 'value': 'trueline'},
-            {'label': 'Straight', 'value': 'straight'}
-        ]
-        },
-    {
-        'id': f'graphdiff_mode_{bp.botid}',
-        'prompt': 'Periodic difference measures arithmetic difference in value between adjacent periods. Periodic percent change measures the percent change difference between adjacent periods.',
-        'inputtype': 'radio',
-        'options': [
-            {'label': 'Periodic Difference', 'value': 'pdiff'},
-            {'label': 'Periodic Percent Change', 'value': 'pctchange'}
-        ],
-        'value': 'pctchange',
-        'inline': 'inline'
-        },
-    {
-        'id': f'graphdiff_changecol_{bp.botid}',
-        'prompt': 'Select a calibration you want to compute the periodic change.',
-        'inputtype': 'dropdown',
-        'options': [],
-        'placeholder': 'select calibration',
-        'value': 'all',
-        'multi': False,
-        'searchable': False,
-        'clearable': False
-        },
-    {
-        'id': f'graphdiff_period_{bp.botid}',
-        'prompt': 'Enter the period (in days) you want differences or percent change to calculated.  For example, period of 1 for mode "Periodic Percent Change" gives you a graph representing the daily percent change of the source calibration.',
-        'inputtype': 'number',
-        'value': 1,
-        'min': 1,
-        'step': 1,
-        'debounce': True
-        },
-    {
-        'id': f'graphcompoptions_{bp.botid}',
-        'prompt': 'Graphs proportion difference between two available calibrations A and B.  Thus, option "A to B" means it will output a graph such that the graph is a representation of (A - B) / B.',
-        'inputtype': 'dropdown',
-        'options': [],
-        'placeholder': 'select comparison',
-        'multi': False,
-        'searchable': False,
-        'clearable': True
-        },
-    {
-        'id': f'bench_{bp.botid}',
-        'prompt': 'Select a benchmark to compare against your portfolio.',
-        'details': '',
-        'inputtype': 'checklist',
-        'options': [
-            {'label': 'Dow Jones', 'value': '^DJI'},
-            {'label': 'S&P 500', 'value': '^INX'},
-            {'label': 'NASDAQ', 'value': '^IXIC'}
-        ],
-        'inline': 'inline'
-        },
-    {
-        'id': f'hovermode_{bp.botid}',
-        'prompt': 'Choose how you want to display data when you hover over the graph.',
-        'inputtype': 'radio',
-        'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
-        'value': 'closest',
-        'inline': 'inline'
-        }
-]
+perfgraphtab = html.Div([
+    html.Table(gen_tablecontents(perf_graph_inputs)),
+    html.Div(dash_inputbuilder({
+        'inputtype': 'table',
+        'id': f"sourcetable_{bp.botid}"
+        }), id=f"hidden_{bp.botid}", hidden='hidden'),
+    html.Br(),
+    dcc.Tabs([
+        dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
+        dcc.Tab(html.Div([
+            html.Table(gen_tablecontents(pdiffsettings)),
+            dcc.Graph(id=f"graphdiff_{bp.botid}")
+            ], className=format_tabs), label='Periodic Change'),
+        dcc.Tab(html.Div([
+            html.Table(gen_tablecontents(compsettings)),
+            dcc.Graph(id=f"graphcomp_{bp.botid}")
+            ], className=format_tabs), label='Comparative'),
+        dcc.Tab(label='Volatility Metrics', children=[
+            html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"voltable_{bp.botid}"
+                }), className=format_tabs)
+        ]),
+        dcc.Tab(label='Raw Data', children=[
+            html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"rawdata_{bp.botid}"
+                }), className=format_tabs)])
+    ])])
 
 layout = html.Div([
     html.Div([
@@ -463,15 +123,16 @@ layout = html.Div([
             'inputtype': 'button_submit'
             })
         ], id=f'input_{bp.botid}'),
+    html.Br(),
     dcc.Tabs([
-        dcc.Tab(label='Input Summary', id=f'tab_preview_{bp.botid}', className=format_tabs),
-        dcc.Tab([
+        dcc.Tab(html.Div(id=f'tab_preview_{bp.botid}', className=format_tabs), label='Input Summary'),
+        dcc.Tab(html.Div([
             html.Div(id=f"testoutput_{bp.botid}"),
             dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"bptable_{bp.botid}"
-                })], label='Full Ranking', id=f'tab_fullranking_{bp.botid}', className=format_tabs),
-        dcc.Tab([
+                })], className=format_tabs), label='Full Ranking'),
+        dcc.Tab(html.Div([
             dash_inputbuilder({
                 'id': f'hovermode_fullranking_graph_{bp.botid}',
                 'prompt': 'Choose how you want to display data when you hover over the graph.',
@@ -481,17 +142,12 @@ layout = html.Div([
                 'inline': 'inline'
                 }),
             dcc.Graph(id=f"fullranking_graph_{bp.botid}")
-        ], label='Ranking Graph', id=f'tab_fullranking_graph_{bp.botid}', className=format_tabs),
-        dcc.Tab([
-            html.Table(gen_tablecontents(perf_graph_inputs), style={'width': '100%'}),
-            dcc.Graph(id=f"perf_graph_{bp.botid}"),
-            dcc.Graph(id=f"graphdiff_{bp.botid}"),
-            dcc.Graph(id=f"graphcomp_{bp.botid}")
-        ], label='Performance Graph', id=f'tab_perf_graph_{bp.botid}', className=format_tabs),
-        dcc.Tab([dash_inputbuilder({
+        ], className=format_tabs), label='Ranking Graph'),
+        dcc.Tab(html.Div(perfgraphtab, className=format_tabs), label='Performance Graph'),
+        dcc.Tab(html.Div(dash_inputbuilder({
             'inputtype': 'table',
             'id': f"sourcetable_{bp.botid}"
-            })], label='Raw Data', className=format_tabs)
+            }), className=format_tabs), label='Raw Data')
         ])
 ])
 
@@ -879,7 +535,6 @@ def validate_inputs(
 
 # CALC BEST PERFORMERS
 @app.callback(
-    #Output(f'testoutput_{bp.botid}', 'children'),
     Output(f'bptable_{bp.botid}', 'data'),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
     State(f"datepicker_{bp.botid}", 'start_date'),
@@ -1026,8 +681,11 @@ def calc_bestperformers(
 def gen_fullrankgraph(dfdata, hovermode):
     if dfdata and len(pd.DataFrame.from_records(dfdata).columns) > 1:
         botdf = pd.DataFrame.from_records(dfdata)
-        fig = px.line(botdf, x='stock', y=[i for i in botdf.columns if i != 'STOCK'], markers=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Attribute', hovermode=hovermode, uirevision='some-constant')
+        xaxis = 'stock'
+        yaxes = [i for i in botdf.columns if i != 'STOCK']
+        yaxislabel = 'metricvalue'
+        fig = px.bar(botdf, x=xaxis, y=yaxes)
+        fig.update_layout(transition_duration=500, legend_title_text='Attribute', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxislabel)
     else:
         fig = px.line([0])
     return fig
@@ -1040,6 +698,20 @@ def gen_fullrankgraph(dfdata, hovermode):
     )
 def gen_perf_graph_tickerlist(dfdata):
     return pd.DataFrame.from_records(dfdata)['stock'].tolist() if dfdata else []
+
+
+@app.callback(
+    Output(f"portcurve_{bp.botid}", "options"),
+    Output(f"portcurve_{bp.botid}", "value"),
+    Input(f"perf_graph_ticker_{bp.botid}", "value"),
+    Input(f"calib_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value")
+    )
+def show_portcurve_option(ticker, calib, portcurvevalue):
+    if ticker:
+        return PriceExplorerHelperFunctions().show_portcurve_option(ticker, calib, portcurvevalue)
+    else:
+        return [], []
 
 
 # gen performance graphs
@@ -1057,48 +729,17 @@ def gen_perf_graph_tickerlist(dfdata):
     Input(f"graphdiff_mode_{bp.botid}", "value"),
     Input(f"graphdiff_changecol_{bp.botid}", "value"),
     Input(f"graphdiff_period_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value"),
     Input(f"bench_{bp.botid}", 'value'),
     Input(f"hovermode_{bp.botid}", 'value')
     )
-def gen_graph(ticker, start_date, end_date, calib, contour, graphcomp, gdm, gdc, gdp, bench, hovermode):
+def gen_graph(ticker, start_date, end_date, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
     if ticker:
-        portfolio = ticker.copy()
-        df = pricedf_daterange(ticker[0], start_date, end_date)
-        for t in ticker[1:]:
-            df = df.join(pricedf_daterange(t, start_date, end_date).set_index('date'), how="left", on="date")
-        df.sort_values(by='date', inplace=True)
-        df.reset_index(inplace=True, drop=True)
-        for b in bench:
-            bdf = pricedf_daterange(b, start_date, end_date)
-            bdf.rename(columns={b: f'bench_{b}'}, inplace=True)
-            df = df.join(bdf.set_index('date'), how="left", on="date")
-        ticker += [f'bench_{b}' for b in bench]
-        if calib == 'normalize':
-            df[ticker] = df[ticker].apply(lambda x: convertpricearr(x, 'norm1'))
-        df = add_calibratedprices_portfolio(df, contour, ticker)
-        if len(contour) > 0:
-            ticker += [f'{t}_{c}' for c in contour for t in ticker]
-        if graphcomp:
-            gc_inputs = graphcomp.split(" ")
-            gcomp_portfolio = portfolio+[f'bench_{b}' for b in bench]
-            df = add_comparisons_portfolio(df, gc_inputs[0], gc_inputs[1], gcomp_portfolio)
-            compgraphcols = [f'{s}_{gc_inputs[0]}to{gc_inputs[1]}' for s in gcomp_portfolio]
-        else:
-            compgraphcols = None
-        df, sourcecols = add_pdiffpctchange_portfolio(df, gdc, gdp, gdm, ticker)
-        diffgraphcols = [f'{s}_{gdp}d_{gdm}' for s in sourcecols]
+        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(staticmindate, ticker, calib, None, None, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
     else:
         df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
         compgraphcols, diffgraphcols, ticker = '$', '$', '$'
-    fig = px.line(df, x='date', y=ticker, markers=False)
-    fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-    fig_diff = px.line(df, x='date', y=diffgraphcols, markers=False)
-    fig_diff.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig_diff.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-    fig_comp = px.line(df, x='date', y=compgraphcols, markers=False)
-    fig_comp.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig_comp.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
+    fig, fig_diff, fig_comp = PriceExplorerHelperFunctions().gen_graph_fig(df, ticker, diffgraphcols, compgraphcols, hovermode)
     return fig, fig_diff, fig_comp, df.to_dict('records')
 
 
@@ -1107,11 +748,35 @@ def gen_graph(ticker, start_date, end_date, calib, contour, graphcomp, gdm, gdc,
     Output(f"graphcompoptions_{bp.botid}", "options"),
     Output(f"graphcompoptions_{bp.botid}", "value"),
     Output(f"graphdiff_changecol_{bp.botid}", "options"),
+    Output(f"graphdiff_changecol_{bp.botid}", "value"),
     Input(f"contour_{bp.botid}", "value")
     )
 def show_diffgraph_options(contour):
-    if len(contour) == 0:
-        return [], None, ['rawprice']
-    else:
-        p = permutations(contour + ['rawprice'], 2)
-        return [{'label': f'{i[0]} to {i[1]}', 'value': f'{i[0]} {i[1]}'} for i in p], None, ['all', 'rawprice']+contour
+    return PriceExplorerHelperFunctions().show_diffgraph_options(contour)
+
+
+# sort raw data table
+# sourcetable is a hidden html DIV where orig filterdf is stored to be used by voldf and rawdatatable tab
+@app.callback(
+    Output(f"rawdata_{bp.botid}", "data"),
+    Input(f"rawdata_{bp.botid}", 'sort_by'),
+    Input(f"rawdata_{bp.botid}", "data"),
+    Input(f"sourcetable_{bp.botid}", "data")
+    )
+def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
+    return PriceExplorerHelperFunctions().sort_rawdatatable(sort_by, rawdatatable, sourcetable)
+
+
+# get volstats
+@app.callback(
+    Output(f"voltable_{bp.botid}", "data"),
+    Output(f"voltable_{bp.botid}", "tooltip_header"),
+    Input(f"perf_graph_ticker_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value"),
+    Input(f"bench_{bp.botid}", 'value'),
+    Input(f"voltable_{bp.botid}", 'sort_by'),
+    Input(f"voltable_{bp.botid}", "data"),
+    Input(f"sourcetable_{bp.botid}", "data")
+    )
+def gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable):
+    return PriceExplorerHelperFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable)

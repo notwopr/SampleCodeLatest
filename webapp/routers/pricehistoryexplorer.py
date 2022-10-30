@@ -10,30 +10,21 @@ Purpose:  .
 """
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
-from itertools import permutations
 #   THIRD PARTY IMPORTS
-from dash import dcc, html, callback_context
+from dash import dcc, html
 from dash.dependencies import Input, Output
 from dashappobject import app
-import plotly.express as px
 import pandas as pd
-import numpy as np
 from webapp.servernotes import getstockdata
 #   LOCAL APPLICATION IMPORTS
-from Modules.dataframe_functions import filtered_double, filtered_single
+from Modules.dataframe_functions import filtered_double
 from Modules.datetime_functions import from_pts_to_dtdate
-from Modules.price_history_slicing import pricedf_daterange
-from Modules.price_calib import convertpricearr, add_calibratedprices_portfolio
-from .pricehistoryexplorer_helper_diffcomp import add_comparisons_portfolio, add_pdiffpctchange_portfolio
-from .pricehistoryexplorer_helper_volstats import getallmetricvalsdf
-from .pricehistoryexplorer_helper_volstats_definitions import volstat_definitions
 from ..botclasses import BotParams
 from ..os_functions import get_currentscript_filename
 from ..common_resources import tickers, staticmindate, staticmaxdate
 from ..dashinputs import gen_tablecontents, prompt_builder, dash_inputbuilder
-from ..datatables import DataTableOperations
 from formatting import format_tabs
-
+from .pricehistoryexplorer_helper_graphcomp import PriceExplorerHelperFunctions
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -50,6 +41,51 @@ mdf.rename(columns={'index': 'date'}, inplace=True)
 mdf['date'] = mdf['date'].apply(lambda x: from_pts_to_dtdate(x))
 mdf['$'] = 0
 
+pdiffsettings = [
+    {
+        'id': f'graphdiff_mode_{bp.botid}',
+        'prompt': 'Periodic difference measures arithmetic difference in value between adjacent periods. Periodic percent change measures the percent change difference between adjacent periods.',
+        'inputtype': 'radio',
+        'options': [
+            {'label': 'Periodic Difference', 'value': 'pdiff'},
+            {'label': 'Periodic Percent Change', 'value': 'pctchange'}
+        ],
+        'value': 'pctchange',
+        'inline': 'inline'
+        },
+    {
+        'id': f'graphdiff_changecol_{bp.botid}',
+        'prompt': 'Select a calibration you want to compute the periodic change.',
+        'inputtype': 'dropdown',
+        'options': [],
+        'value': 'all',
+        'placeholder': 'select calibration',
+        'multi': False,
+        'searchable': False,
+        'clearable': False
+        },
+    {
+        'id': f'graphdiff_period_{bp.botid}',
+        'prompt': 'Enter the period (in days) you want differences or percent change to calculated.  For example, period of 1 for mode "Periodic Percent Change" gives you a graph representing the daily percent change of the source calibration.',
+        'inputtype': 'number',
+        'value': 1,
+        'min': 1,
+        'step': 1,
+        'debounce': True
+        }
+]
+compsettings = [
+    {
+        'id': f'graphcompoptions_{bp.botid}',
+        'prompt': 'Graphs proportion difference between two available calibrations A and B.  Thus, option "A to B" means it will output a graph such that the graph is a representation of (A - B) / B.',
+        'inputtype': 'dropdown',
+        'options': [],
+        'placeholder': 'select comparison',
+        'multi': False,
+        'searchable': False,
+        'clearable': True
+        }
+]
 tbodydata = [
     {
         'id': f'ticker_{bp.botid}',
@@ -108,47 +144,6 @@ tbodydata = [
         ]
         },
     {
-        'id': f'graphdiff_mode_{bp.botid}',
-        'prompt': 'Periodic difference measures arithmetic difference in value between adjacent periods. Periodic percent change measures the percent change difference between adjacent periods.',
-        'inputtype': 'radio',
-        'options': [
-            {'label': 'Periodic Difference', 'value': 'pdiff'},
-            {'label': 'Periodic Percent Change', 'value': 'pctchange'}
-        ],
-        'value': 'pctchange',
-        'inline': 'inline'
-        },
-    {
-        'id': f'graphdiff_changecol_{bp.botid}',
-        'prompt': 'Select a calibration you want to compute the periodic change.',
-        'inputtype': 'dropdown',
-        'options': [],
-        'value': 'all',
-        'placeholder': 'select calibration',
-        'multi': False,
-        'searchable': False,
-        'clearable': False
-        },
-    {
-        'id': f'graphdiff_period_{bp.botid}',
-        'prompt': 'Enter the period (in days) you want differences or percent change to calculated.  For example, period of 1 for mode "Periodic Percent Change" gives you a graph representing the daily percent change of the source calibration.',
-        'inputtype': 'number',
-        'value': 1,
-        'min': 1,
-        'step': 1,
-        'debounce': True
-        },
-    {
-        'id': f'graphcompoptions_{bp.botid}',
-        'prompt': 'Graphs proportion difference between two available calibrations A and B.  Thus, option "A to B" means it will output a graph such that the graph is a representation of (A - B) / B.',
-        'inputtype': 'dropdown',
-        'options': [],
-        'placeholder': 'select comparison',
-        'multi': False,
-        'searchable': False,
-        'clearable': True
-        },
-    {
         'id': f'bench_{bp.botid}',
         'prompt': 'Select a benchmark to compare against your portfolio.',
         'details': '',
@@ -174,34 +169,42 @@ layout = html.Div([
     html.Div([
         html.Table(gen_tablecontents(tbodydata), style={'width': '100%'}),
     ], id=f'input_{bp.botid}'),
-    html.Div([
-        html.Div(dash_inputbuilder({
-            'inputtype': 'table',
-            'id': f"sourcetable_{bp.botid}"
-            }), id=f"hidden_{bp.botid}", hidden='hidden'),
-        html.Div(dash_inputbuilder({
-            'inputtype': 'table',
-            'id': f"voltable_{bp.botid}"
-            }), id=f"stats_{bp.botid}"),
-        dcc.Tabs([
-            dcc.Tab(label='Price History', children=[dcc.Graph(id=f"graph_{bp.botid}")], className=format_tabs),
-            dcc.Tab(label='Periodic Change', children=[dcc.Graph(id=f"graphdiff_{bp.botid}")], className=format_tabs),
-            dcc.Tab(label='Comparative', children=[dcc.Graph(id=f"graphcomp_{bp.botid}")], className=format_tabs),
-            dcc.Tab(label='Raw Data', children=[dash_inputbuilder({
+    prompt_builder({
+        'prompt': 'Date Range Slider',
+        'id': f'dateslider_{bp.botid}',
+        'inputtype': 'rangeslider',
+        'min': 0,
+        'max': len(mdf)-1,
+        'value': [0, len(mdf)-1]
+        }),
+    html.Div(dash_inputbuilder({
+        'inputtype': 'table',
+        'id': f"sourcetable_{bp.botid}"
+        }), id=f"hidden_{bp.botid}", hidden='hidden'),
+    html.Br(),
+    dcc.Tabs([
+        dcc.Tab(html.Div(dcc.Graph(id=f"graph_{bp.botid}", className=format_tabs)), label='Price History'),
+        # dcc.Tab(label='Price History', children=[dcc.Graph(id=f"graph_{bp.botid}", className=format_tabs)]),
+        dcc.Tab(html.Div([
+            html.Table(gen_tablecontents(pdiffsettings)),
+            dcc.Graph(id=f"graphdiff_{bp.botid}")
+            ], className=format_tabs), label='Periodic Change'),
+        dcc.Tab(html.Div([
+            html.Table(gen_tablecontents(compsettings)),
+            dcc.Graph(id=f"graphcomp_{bp.botid}")
+            ], className=format_tabs), label='Comparative'),
+        dcc.Tab(label='Volatility Metrics', children=[
+            html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"voltable_{bp.botid}"
+                }), className=format_tabs)
+        ]),
+        dcc.Tab(label='Raw Data', children=[
+            html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"rawdata_{bp.botid}"
-                })], className=format_tabs)
-        ]),
-        prompt_builder({
-            'prompt': 'Date Range Slider',
-            'id': f'dateslider_{bp.botid}',
-            'inputtype': 'rangeslider',
-            'min': 0,
-            'max': len(mdf)-1,
-            'value': [0, len(mdf)-1]
-            })
-        ], id=f'output_{bp.botid}')
-
+                }), className=format_tabs)])
+    ])
 ])
 
 
@@ -229,42 +232,7 @@ layout = html.Div([
     )
 def gen_graph(ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, date, hovermode):
     if ticker:
-        portfolio = ticker.copy()
-        df = pricedf_daterange(ticker[0], '', '')
-        for t in ticker[1:]:
-            df = df.join(pricedf_daterange(t, '', '').set_index('date'), how="outer", on="date")
-        df.sort_values(by='date', inplace=True)
-        df.reset_index(inplace=True, drop=True)
-        new_sd = str(df['date'].iloc[0].date())  # shift graph&slider to start at beginning of oldest selected stock
-        all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in ticker]
-        for b in bench:
-            bdf = pricedf_daterange(b, '', '')
-            bdf.rename(columns={b: f'bench_{b}'}, inplace=True)
-            df = df.join(bdf.set_index('date'), how="left", on="date")
-        ticker += [f'bench_{b}' for b in bench]
-        if sd is not None:  # choose a diff start from datepicker
-            df = filtered_single(df, '>=', sd, 'date')
-            df.reset_index(drop=True, inplace=True)
-        if sd_bydd is not None:  # choose a diff start from selected stocks list
-            df = filtered_single(df, '>=', sd_bydd, 'date')
-            df.reset_index(drop=True, inplace=True)
-        if calib == 'normalize':
-            df[ticker] = df[ticker].apply(lambda x: convertpricearr(x, 'norm1'))
-            if len(ticker) > 1 and 'portcurve' in portcurve:
-                df['portcurve'] = df[ticker].mean(axis=1)
-                ticker += ['portcurve']
-        df = add_calibratedprices_portfolio(df, contour, ticker)
-        if len(contour) > 0:
-            ticker += [f'{t}_{c}' for c in contour for t in ticker]
-        if graphcomp:
-            gc_inputs = graphcomp.split(" ")
-            gcomp_portfolio = portfolio+[f'bench_{b}' for b in bench]+['portcurve'] if 'portcurve' in ticker else portfolio+[f'bench_{b}' for b in bench]
-            df = add_comparisons_portfolio(df, gc_inputs[0], gc_inputs[1], gcomp_portfolio)
-            compgraphcols = [f'{s}_{gc_inputs[0]}to{gc_inputs[1]}' for s in gcomp_portfolio]
-        else:
-            compgraphcols = None
-        df, sourcecols = add_pdiffpctchange_portfolio(df, gdc, gdp, gdm, ticker)
-        diffgraphcols = [f'{s}_{gdp}d_{gdm}' for s in sourcecols]
+        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(staticmindate, ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
         new_min = mdf.index[mdf['date'] == df['date'].iloc[0].date()].tolist()[0]
         filterdf = filtered_double(df, '>=<=', str(mdf['date'][date[0]]), str(mdf['date'][date[1]]), 'date')
     else:
@@ -273,15 +241,7 @@ def gen_graph(ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, por
         new_min = 0
         new_sd = staticmindate
         all_sd = []
-    fig = px.line(filterdf, x='date', y=ticker, markers=False)#, template=chosenfigtemp)
-    fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-    fig_diff = px.line(filterdf, x='date', y=diffgraphcols, markers=False)#, template=chosenfigtemp)
-    fig_diff.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig_diff.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-    fig_comp = px.line(filterdf, x='date', y=compgraphcols, markers=False)#, template=chosenfigtemp)
-    fig_comp.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
-    fig_comp.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
+    fig, fig_diff, fig_comp = PriceExplorerHelperFunctions().gen_graph_fig(filterdf, ticker, diffgraphcols, compgraphcols, hovermode)
     return fig, fig_diff, fig_comp, new_min, new_sd, all_sd, filterdf.to_dict('records')
 
 
@@ -293,28 +253,19 @@ def gen_graph(ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, por
     Input(f"portcurve_{bp.botid}", "value")
     )
 def show_portcurve_option(ticker, calib, portcurvevalue):
-    if ticker and calib == 'normalize' and len(ticker) > 1:
-        return [
-            {'label': 'Add portfolio graph', 'value': 'portcurve'}
-        ], portcurvevalue
-
-    else:
-        return [], []
+    return PriceExplorerHelperFunctions().show_portcurve_option(ticker, calib, portcurvevalue)
 
 
 # create options for diffgraph and comp graph
 @app.callback(
     Output(f"graphcompoptions_{bp.botid}", "options"),
+    Output(f"graphcompoptions_{bp.botid}", "value"),
     Output(f"graphdiff_changecol_{bp.botid}", "options"),
     Output(f"graphdiff_changecol_{bp.botid}", "value"),
     Input(f"contour_{bp.botid}", "value")
     )
 def show_diffgraph_options(contour):
-    if len(contour) == 0:
-        return [], ['rawprice'], 'rawprice'
-    else:
-        p = permutations(contour + ['rawprice'], 2)
-        return [{'label': f'{i[0]} to {i[1]}', 'value': f'{i[0]} {i[1]}'} for i in p], ['all', 'rawprice']+contour, 'all'
+    return PriceExplorerHelperFunctions().show_diffgraph_options(contour)
 
 
 # sort raw data table
@@ -326,16 +277,7 @@ def show_diffgraph_options(contour):
     Input(f"sourcetable_{bp.botid}", "data")
     )
 def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
-    if rawdatatable and callback_context.triggered[0]['prop_id'].endswith('sort_by'):
-        # convert table back to dataframe
-        filterdf = pd.DataFrame.from_records(rawdatatable)
-        # because filterdf is converted to .to_dict('records') and then back from that; the date col type is changed to strings
-        # as consequence have to change datecol back to original datatype: <class 'pandas._libs.tslibs.timestamps.Timestamp'>
-        filterdf['date'] = filterdf['date'].apply(lambda x: pd.Timestamp(x))
-        filterdf = DataTableOperations().sort_datatable(sort_by, filterdf)
-        return filterdf.to_dict('records')
-    else:
-        return sourcetable
+    return PriceExplorerHelperFunctions().sort_rawdatatable(sort_by, rawdatatable, sourcetable)
 
 
 # get volstats
@@ -350,47 +292,4 @@ def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
     Input(f"sourcetable_{bp.botid}", "data")
     )
 def gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable):
-    if voldata and callback_context.triggered[0]['prop_id'].endswith('sort_by'):
-        # convert table back to dataframe
-        voldf = pd.DataFrame.from_records(voldata)
-        voldf = DataTableOperations().sort_datatable(sort_by, voldf)
-        tooltip = {i: volstat_definitions[i] for i in voldf.columns[1:]}
-    elif ticker:
-        portfolio = ticker.copy()
-        filterdf = pd.DataFrame.from_records(sourcetable)
-        # because filterdf is converted to .to_dict('records') and then back from that; the date col type is changed to strings
-        # as consequence have to change datecol back to original datatype: <class 'pandas._libs.tslibs.timestamps.Timestamp'>
-        filterdf['date'] = filterdf['date'].apply(lambda x: pd.Timestamp(x))
-        metdftickers = portfolio+[f'bench_{b}' for b in bench]+['portcurve'] if 'portcurve' in portcurve else portfolio+[f'bench_{b}' for b in bench]
-        voldf = getallmetricvalsdf(filterdf, metdftickers, bench, str(filterdf.iat[0, 0].date()), str(filterdf.iat[-1, 0].date()))
-        tooltip = {i: volstat_definitions[i] for i in voldf.columns[1:]}
-    else:
-        voldf = pd.DataFrame(data=['No ticker selected.'])
-        tooltip = None
-    return voldf.to_dict('records'), tooltip
-
-
-'''
-df = pricedf_daterange(ticker[0], '', '')
-for t in ticker[1:]:
-    df = df.join(pricedf_daterange(t, '', '').set_index('date'), how="outer", on="date")
-df.sort_values(by='date', inplace=True)
-df.reset_index(inplace=True, drop=True)
-for b in bench:
-    bdf = pricedf_daterange(b, '', '')
-    bdf.rename(columns={b: f'bench_{b}'}, inplace=True)
-    df = df.join(bdf.set_index('date'), how="left", on="date")
-ticker += [f'bench_{b}' for b in bench]
-if sd is not None:  # choose a diff start from datepicker
-    df = filtered_single(df, '>=', sd, 'date')
-    df.reset_index(drop=True, inplace=True)
-if sd_bydd is not None:  # choose a diff start from selected stocks list
-    df = filtered_single(df, '>=', sd_bydd, 'date')
-    df.reset_index(drop=True, inplace=True)
-if calib == 'normalize':
-    df[ticker] = df[ticker].apply(lambda x: convertpricearr(x, 'norm1'))
-    if len(ticker) > 1 and 'portcurve' in portcurve:
-        df['portcurve'] = df[ticker].mean(axis=1)
-        ticker += ['portcurve']
-filterdf = filtered_double(df, '>=<=', str(mdf['date'][date[0]]), str(mdf['date'][date[1]]), 'date')
-'''
+    return PriceExplorerHelperFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable)

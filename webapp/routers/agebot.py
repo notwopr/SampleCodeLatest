@@ -125,29 +125,25 @@ tbodydata = [
 ]
 
 layout = html.Div([
-    html.Div([
         html.Table(gen_tablecontents(tbodydata)),
         prompt_builder({
             'id': f'submitbutton_{bp.botid}',
             'inputtype': 'button_submit'
-            })
-        ], id=f'input_{bp.botid}'),
-    dcc.Tabs([
-        dcc.Tab(label='Overall Stats', children=[
-            dash_inputbuilder({
-                'inputtype': 'table',
-                'id': f"agestats_{bp.botid}"
-                })], className=format_tabs
-                ),
-        dcc.Tab(label='Stats by Trial', children=[
-            dash_inputbuilder({
-                'inputtype': 'table',
-                'id': f"trialstats_{bp.botid}"
-                })], className=format_tabs
-                )
-    ]),
-    html.Div(id=f'output_{bp.botid}')
-])
+            }),
+        html.Br(),
+        dcc.Tabs([
+            dcc.Tab(html.Div(
+                dash_inputbuilder({
+                    'inputtype': 'table',
+                    'id': f"agestats_{bp.botid}"
+                    }), className=format_tabs), label='Overall Stats'),
+            dcc.Tab(html.Div(
+                dash_inputbuilder({
+                    'inputtype': 'table',
+                    'id': f"trialstats_{bp.botid}"
+                    }), className=format_tabs), label='Stats by Trial')
+            ])
+    ])
 
 
 # get random dates
