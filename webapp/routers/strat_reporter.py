@@ -308,7 +308,7 @@ def gen_perf_graph_tickerlist(dfdata):
     return pd.DataFrame.from_records(dfdata)['stock'].tolist() if dfdata else []
 
 
-ds = DataSource().opends('eodprices')
+# ds = DataSource().opends('eodprices')
 
 
 # gen performance graphs
@@ -331,6 +331,7 @@ def gen_graph(tickers, invest_startdate, calib, contour, graphcomp, gdm, gdc, gd
     yaxis = '$'
     if tickers:
         # df = DataSource().opends('eodprices')
+        ds = DataSource().opends('eodprices')
         df = DataFrameOperations().filter_column(ds, ['date']+tickers)
         df.ffill(inplace=True)
         df = DataFrameOperations().filtered_single(df, '<=', invest_startdate, 'date')
