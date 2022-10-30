@@ -10,12 +10,12 @@ Purpose:  Shows you graph of requested date range and stock and gives you dates 
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
 #   THIRD PARTY IMPORTS
-import numpy as np
+# import numpy as np
 #   LOCAL APPLICATION IMPORTS
 from Modules.price_history_slicing import pricedf_daterange
-from Modules.price_calib_cruncher import oldbaremin_cruncher, baremax_cruncher
+# from Modules.price_calib_cruncher import oldbaremin_cruncher, baremax_cruncher
 from Modules.timeperiodbot import dipdates, peakdiprecoverydates
-from Modules.referencetools.graphing.SCRATCHPAPER_GRAPHING import graphtopbottom
+# from Modules.referencetools.graphing.SCRATCHPAPER_GRAPHING import graphtopbottom
 from Modules.dates import DateOperations
 from Modules.numbers import formalnumber, formalnumber_integer
 
