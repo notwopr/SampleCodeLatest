@@ -67,7 +67,7 @@ tbodydata = [
         },
     {
         'id': f'perf_cut_{bp.botid}',
-        'prompt': 'Your performance rate fee.  Enter the portion of gains your clients earn that would go to you.',
+        'prompt': 'Your performance rate fee.  Enter the portion of gains your clients earn that would go to you. (1=100%)',
         'details':  "For example, if your client money grew by $100, and you entered 0.25, your cut would be 25% of that gain, or $25.",
         'placeholdertext': 'your perf fee rate',
         'inputtype': 'number',
@@ -75,14 +75,14 @@ tbodydata = [
         },
     {
         'id': f'comp_perf_cut_{bp.botid}',
-        'prompt': 'Competitor performance rate fee.  Enter the portion of gains competitor clients earn that would go to the competitor.',
+        'prompt': 'Competitor performance rate fee.  Enter the portion of gains competitor clients earn that would go to the competitor. (1=100%)',
         'placeholdertext': 'comp perf fee rate',
         'inputtype': 'number',
         'min': 0
         },
     {
         'id': f'aum_rate_{bp.botid}',
-        'prompt': "Your AUM Rate. Enter the proportion of the client's principal that would go to you as a fee for managing their investments.",
+        'prompt': "Your AUM Rate. Enter the proportion of the client's principal that would go to you as a fee for managing their investments. (1=100%)",
         'details': "For example, if you entered 0.05, 5% of the client principal would be charged to client).  AUM stands for assets under management.",
         'placeholdertext': 'your AUM rate',
         'inputtype': 'number',
@@ -90,35 +90,35 @@ tbodydata = [
         },
     {
         'id': f'comp_aum_rate_{bp.botid}',
-        'prompt': 'Competitor AUM Rate.  The rate your competitor would charge their client for managing their assets.',
+        'prompt': 'Competitor AUM Rate.  The rate your competitor would charge their client for managing their assets. (1=100%)',
         'placeholdertext': 'comp AUM rate',
         'inputtype': 'number',
         'min': 0
         },
     {
         'id': f'mkt_perf_{bp.botid}',
-        'prompt': 'Enter hypothetical performance of the market.',
+        'prompt': 'Enter hypothetical performance of the market. (1=100%)',
         'details': 'This is for comparison purposes, so you can compare how you and your competitors did against a hypothetical market.  If you entered 0.12, for example, the market growth rate would be 12% over the time period being considered.',
         'placeholdertext': 'market growth rate',
         'inputtype': 'number',
         },
     {
         'id': f'your_perf_{bp.botid}',
-        'prompt': 'Enter how well your fund performed over the time period being considered.',
+        'prompt': 'Enter how well your fund performed over the time period being considered. (1=100%)',
         'details': 'For example, entering 0.18 is the equivalent to 18%.',
         'placeholdertext': 'your growth rate',
         'inputtype': 'number',
         },
     {
         'id': f'comp_perf_{bp.botid}',
-        'prompt': "Enter how well your competitor's fund performed over the time period being considered.",
+        'prompt': "Enter how well your competitor's fund performed over the time period being considered. (1=100%)",
         'details': 'For example, entering 0.18 is the equivalent to 18%.',
         'placeholdertext': 'comp growth rate',
         'inputtype': 'number',
         },
     {
         'id': f'switch_factor_{bp.botid}',
-        'prompt': "Enter a switch factor.  This is an amount more that a competitor client would need to earn with your fund for them to switch to your fund.  For example, if you entered 0.20, to convince the client to switch to your fund, the client would have to earn 20% more (after fees paid) than they would with competitor.",
+        'prompt': "Enter a switch factor.  This is an amount more that a competitor client would need to earn with your fund for them to switch to your fund. (1=100%).",
         'details': 'For example, if the switch factor was 0.05, and the client grew his money by $100 investing through the competitor after all fees were paid, then for the client to go with your fund, the client would need to have earned 5% more than that, or $5 (0.05 of $100), for a total gain of $105. If the client earned only $102 through your fund, that means the client would not switch to you because they would have earned only $2 more, or 2%, which is less than the 5% switch factor.',
         'placeholdertext': 'enter switch factor',
         'inputtype': 'number',
@@ -161,25 +161,30 @@ layout = html.Div([
             'inputtype': 'button_submit'
             })
         ], id=f'input_{bp.botid}'),
+    html.Br(),
     dcc.Tabs([
-        dcc.Tab(label='Report', children=[
-            html.Div(id=f'compedgereport_{bp.botid}')
-            ], className=format_tabs),
-        dcc.Tab(label='Fund Performance', children=[
-            dash_inputbuilder({
+        dcc.Tab(html.Div(id=f'compedgereport_{bp.botid}', className=format_tabs), label='Report'),
+        dcc.Tab(html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'sort_action': 'none',
                 'sort_action': 'none',
                 'id': f"fundperfdf_{bp.botid}"
-                })
-            ], className=format_tabs),
-        dcc.Tab(label='Comp Edge Graph', id=f'leadertab_{bp.botid}', children=[
+                }), className=format_tabs), label='Fund Performance'),
+        dcc.Tab(html.Div([
+            html.Span([html.B('Hover Options:')]),
+            dash_inputbuilder({
+                'id': f'hovermode_{bp.botid}',
+                'prompt': 'Choose how you want to display data when you hover over the graph.',
+                'inputtype': 'radio',
+                'options': [{'label': x, 'value': x} for x in ['x', 'x unified', 'closest']],
+                'value': 'x',
+                'inline': 'inline'
+                }),
             dcc.Graph(id=f"graph_edgerate_{bp.botid}"),
             html.Div([
                 html.Span(id=f"you_perf_slidelabel_{bp.botid}"),
                 dcc.Slider(-1, 1, step=0.01, marks=None, id=f"you_perf_{bp.botid}", tooltip={"placement": "bottom", "always_visible": True})
-            ])
-            ], className=format_tabs)
+            ])], className=format_tabs), label='Comp Edge Graph', id=f'leadertab_{bp.botid}')
             ])
 ])
 
@@ -275,6 +280,7 @@ def calc_compedge_analysis(
     Input(f'perf_fee_regime_{bp.botid}', "value"),
     Input(f'comp_perf_fee_regime_{bp.botid}', "value"),
     Input(f"you_perf_{bp.botid}", "value"),
+    Input(f"hovermode_{bp.botid}", 'value'),
     prevent_initial_call=True
     )
 def update_edgerategraph(
@@ -294,7 +300,8 @@ def update_edgerategraph(
         comp_overhead_cost,
         perf_fee_regime,
         comp_perf_fee_regime,
-        new_you_perf
+        new_you_perf,
+        hovermode
         ):
     if all([your_name,
             comp_name,
@@ -334,7 +341,7 @@ def update_edgerategraph(
         }
         graphdf = gen_edgeratedf(new_you_perf, 100, -1, 1, new_brp)
         fig = px.line(graphdf, x=f'{comp_name} perfrate', y=['under/over_performing', f'{new_brp["your_name"]} perfrate needed', 'edgerate needed'], markers=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Edge Rate')
+        fig.update_layout(transition_duration=500, legend_title_text='Edge Rate', hovermode=hovermode)
         return fig
     else:
         return dash.no_update

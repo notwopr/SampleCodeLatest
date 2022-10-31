@@ -95,13 +95,11 @@ layout = html.Div([
         ], id=f'nextlevelkeys_{bp.botid}'),
     html.Div(
         dcc.Tabs([
-            dcc.Tab(label='Table Output', children=[
-                dash_inputbuilder({
+            dcc.Tab(html.Div(dash_inputbuilder({
                     'inputtype': 'table',
                     'id': f"dfcontent_{bp.botid}",
-                    })
-            ], id=f'tabletab_{bp.botid}', className=format_tabs),
-            dcc.Tab(label='Table Grapher', children=[
+                    }), className=format_tabs), label='Table Output', id=f'tabletab_{bp.botid}'),
+            dcc.Tab(html.Div([
                 html.Div([
                     html.Span([html.B('Line Graph Mode:')]),
                     dash_inputbuilder({
@@ -125,7 +123,7 @@ layout = html.Div([
                     'inline': 'inline'
                     }),
                 dcc.Graph(id=f'dfgraph_{bp.botid}')
-            ], id=f'graphertab_{bp.botid}', className=format_tabs)
+            ], className=format_tabs), label='Table Grapher', id=f'graphertab_{bp.botid}')
         ]), id=f'tab_block_{bp.botid}')
 ])
 

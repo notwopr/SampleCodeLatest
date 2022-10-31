@@ -39,6 +39,7 @@ from Modules.timeperiodbot import random_dates
 from formatting import format_htmltable_row, format_tabs
 from .pricehistoryexplorer_helper_graphcomp import PriceExplorerHelperFunctions
 from .bestperformers2_helper_inputs import BestPerformerInputs
+from ..graphing.grapher import GraphAssets
 
 benchmarkdata = getbenchdates(benchmarks)
 
@@ -73,40 +74,40 @@ drop_mag_inputs = BestPerformerInputs(bp, tickers).drop_mag_inputs
 drop_prev_inputs = BestPerformerInputs(bp, tickers).drop_prev_inputs
 dropscore_inputs = BestPerformerInputs(bp, tickers).dropscore_inputs
 maxdd_inputs = BestPerformerInputs(bp, tickers).maxdd_inputs
-perf_graph_inputs = BestPerformerInputs(bp, tickers).perf_graph_inputs
-pdiffsettings = BestPerformerInputs(bp, tickers).pdiffsettings
-compsettings = BestPerformerInputs(bp, tickers).compsettings
+# perf_graph_inputs = BestPerformerInputs(bp, tickers).perf_graph_inputs
+# pdiffsettings = BestPerformerInputs(bp, tickers).pdiffsettings
+# compsettings = BestPerformerInputs(bp, tickers).compsettings
 
 
-perfgraphtab = html.Div([
-    html.Table(gen_tablecontents(perf_graph_inputs)),
-    html.Div(dash_inputbuilder({
-        'inputtype': 'table',
-        'id': f"sourcetable_{bp.botid}"
-        }), id=f"hidden_{bp.botid}", hidden='hidden'),
-    html.Br(),
-    dcc.Tabs([
-        dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
-        dcc.Tab(html.Div([
-            html.Table(gen_tablecontents(pdiffsettings)),
-            dcc.Graph(id=f"graphdiff_{bp.botid}")
-            ], className=format_tabs), label='Periodic Change'),
-        dcc.Tab(html.Div([
-            html.Table(gen_tablecontents(compsettings)),
-            dcc.Graph(id=f"graphcomp_{bp.botid}")
-            ], className=format_tabs), label='Comparative'),
-        dcc.Tab(label='Volatility Metrics', children=[
-            html.Div(dash_inputbuilder({
-                'inputtype': 'table',
-                'id': f"voltable_{bp.botid}"
-                }), className=format_tabs)
-        ]),
-        dcc.Tab(label='Raw Data', children=[
-            html.Div(dash_inputbuilder({
-                'inputtype': 'table',
-                'id': f"rawdata_{bp.botid}"
-                }), className=format_tabs)])
-    ])])
+# perfgraphtab = html.Div([
+#     html.Table(gen_tablecontents(perf_graph_inputs)),
+#     html.Div(dash_inputbuilder({
+#         'inputtype': 'table',
+#         'id': f"sourcetable_{bp.botid}"
+#         }), id=f"hidden_{bp.botid}", hidden='hidden'),
+#     html.Br(),
+#     dcc.Tabs([
+#         dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
+#         dcc.Tab(html.Div([
+#             html.Table(gen_tablecontents(pdiffsettings)),
+#             dcc.Graph(id=f"graphdiff_{bp.botid}")
+#             ], className=format_tabs), label='Periodic Change'),
+#         dcc.Tab(html.Div([
+#             html.Table(gen_tablecontents(compsettings)),
+#             dcc.Graph(id=f"graphcomp_{bp.botid}")
+#             ], className=format_tabs), label='Comparative'),
+#         dcc.Tab(label='Volatility Metrics', children=[
+#             html.Div(dash_inputbuilder({
+#                 'inputtype': 'table',
+#                 'id': f"voltable_{bp.botid}"
+#                 }), className=format_tabs)
+#         ]),
+#         dcc.Tab(label='Raw Data', children=[
+#             html.Div(dash_inputbuilder({
+#                 'inputtype': 'table',
+#                 'id': f"rawdata_{bp.botid}"
+#                 }), className=format_tabs)])
+#     ])])
 
 layout = html.Div([
     html.Div([
@@ -143,7 +144,7 @@ layout = html.Div([
                 }),
             dcc.Graph(id=f"fullranking_graph_{bp.botid}")
         ], className=format_tabs), label='Ranking Graph'),
-        dcc.Tab(html.Div(perfgraphtab, className=format_tabs), label='Performance Graph'),
+        dcc.Tab(html.Div(GraphAssets(bp).perfgraphtab, className=format_tabs), label='Performance Graph'),
         dcc.Tab(html.Div(dash_inputbuilder({
             'inputtype': 'table',
             'id': f"sourcetable_{bp.botid}"
@@ -721,8 +722,8 @@ def show_portcurve_option(ticker, calib, portcurvevalue):
     Output(f"graphcomp_{bp.botid}", "figure"),
     Output(f"sourcetable_{bp.botid}", "data"),
     Input(f"perf_graph_ticker_{bp.botid}", "value"),
-    Input(f"datepicker_{bp.botid}", 'start_date'),
-    Input(f"datepicker_{bp.botid}", 'end_date'),
+    # Input(f"datepicker_{bp.botid}", 'start_date'),
+    # Input(f"datepicker_{bp.botid}", 'end_date'),
     Input(f"calib_{bp.botid}", "value"),
     Input(f"contour_{bp.botid}", "value"),
     Input(f"graphcompoptions_{bp.botid}", "value"),
@@ -733,9 +734,9 @@ def show_portcurve_option(ticker, calib, portcurvevalue):
     Input(f"bench_{bp.botid}", 'value'),
     Input(f"hovermode_{bp.botid}", 'value')
     )
-def gen_graph(ticker, start_date, end_date, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
+def gen_graph(ticker, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
     if ticker:
-        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(staticmindate, ticker, calib, None, None, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
+        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(ticker, calib, None, None, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
     else:
         df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
         compgraphcols, diffgraphcols, ticker = '$', '$', '$'

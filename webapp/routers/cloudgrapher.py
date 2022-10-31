@@ -29,6 +29,7 @@ from ..datatables import DataTableOperations
 from newbacktest.symbology.cloudsampcode import CloudSampCode
 from newbacktest.cloudgrapher.db_cloudsample import CloudSampleDatabase
 from .cloudgrapher_helper import aggregate_sipcols, gen_clouddf_single
+from formatting import format_tabs
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -104,21 +105,22 @@ layout = html.Div([
             })
     ], id=f'input_{bp.botid}'),
     html.Br(),
-    dcc.Graph(id=f'cloudgraph_{bp.botid}'),
-    dash_inputbuilder({
-        'inputtype': 'table',
-        'id': f"codechart_{bp.botid}"
-        }),
     html.Br(),
-    dash_inputbuilder({
-        'inputtype': 'table',
-        'id': f"sipchart_{bp.botid}"
-        }),
-    html.Br(),
-    dash_inputbuilder({
-        'inputtype': 'table',
-        'id': f"cloudchart_{bp.botid}"
-        }),
+    dcc.Tabs([
+        dcc.Tab(html.Div(dcc.Graph(id=f"cloudgraph_{bp.botid}"), className=format_tabs), label='Cloud Graph'),
+        dcc.Tab(html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"codechart_{bp.botid}"
+                }), className=format_tabs), label='Curve Glossary'),
+        dcc.Tab(html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"sipchart_{bp.botid}"
+                }), className=format_tabs), label='Stratipcode Glossary'),
+        dcc.Tab(html.Div(dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f"cloudchart_{bp.botid}"
+                }), className=format_tabs), label='Raw Data')
+    ]),
     html.Div(dash_inputbuilder({
         'inputtype': 'table',
         'id': f"cloudchartsource_{bp.botid}"

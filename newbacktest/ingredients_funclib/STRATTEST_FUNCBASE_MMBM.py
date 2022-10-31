@@ -144,9 +144,9 @@ def dropscoreratio_single(prices, uppercol, lowercol, stat_type, benchticker):
         benchprices.reset_index(drop=True, inplace=True)
     allprices = benchprices[benchticker].tolist()
     baremaxrawpricelist = baremax_cruncher(allprices)
-    benchprices[f'{benchticker}_baremaxraw'] = np.array(baremaxrawpricelist)
+    benchprices[f'{benchticker}_baremax'] = np.array(baremaxrawpricelist)
     # get bench dropscore
-    benchds = dropscore_single(benchprices, f'{benchticker}_baremaxraw', benchticker, stat_type)
+    benchds = dropscore_single(benchprices, f'{benchticker}_baremax', benchticker, stat_type)
     # get ratio
     if benchds == 0:
         dropratio = 1

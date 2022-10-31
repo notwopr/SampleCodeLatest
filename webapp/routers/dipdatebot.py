@@ -75,6 +75,7 @@ layout = html.Div([
             'inputtype': 'button_submit',
             }),
     ], id=f'input_{bp.botid}'),
+    html.Br(),
     html.Div([
         'Ticker: ', html.Span(id=f'displayinput_ticker_{bp.botid}'),
         html.Br(),

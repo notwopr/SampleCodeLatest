@@ -89,7 +89,7 @@ layout = html.Div([
     ], id=f'input_{bp.botid}'),
     dcc.Tabs([
         dcc.Tab(label='Price Change Heat Map', id=f'output_{bp.botid}', className=format_tabs),
-        dcc.Tab(label='Time Chunk Ranking', children=[
+        dcc.Tab(html.Div([
             dash_inputbuilder({
                 'id': f'average_{bp.botid}',
                 'prompt': 'Select type of average.',
@@ -102,8 +102,8 @@ layout = html.Div([
                 'inputtype': 'table',
                 'id': f"chunkranktable_{bp.botid}"
                 })
-            ])
-    ], className=format_tabs),
+            ], className=format_tabs), label='Time Chunk Ranking')
+    ]),
     html.Div(dash_inputbuilder({
         'inputtype': 'table',
         'id': f"chunkranksource_{bp.botid}"

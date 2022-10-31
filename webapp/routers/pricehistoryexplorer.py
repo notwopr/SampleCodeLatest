@@ -183,8 +183,7 @@ layout = html.Div([
         }), id=f"hidden_{bp.botid}", hidden='hidden'),
     html.Br(),
     dcc.Tabs([
-        dcc.Tab(html.Div(dcc.Graph(id=f"graph_{bp.botid}", className=format_tabs)), label='Price History'),
-        # dcc.Tab(label='Price History', children=[dcc.Graph(id=f"graph_{bp.botid}", className=format_tabs)]),
+        dcc.Tab(html.Div(dcc.Graph(id=f"graph_{bp.botid}"), className=format_tabs), label='Price History'),
         dcc.Tab(html.Div([
             html.Table(gen_tablecontents(pdiffsettings)),
             dcc.Graph(id=f"graphdiff_{bp.botid}")
@@ -193,17 +192,14 @@ layout = html.Div([
             html.Table(gen_tablecontents(compsettings)),
             dcc.Graph(id=f"graphcomp_{bp.botid}")
             ], className=format_tabs), label='Comparative'),
-        dcc.Tab(label='Volatility Metrics', children=[
-            html.Div(dash_inputbuilder({
-                'inputtype': 'table',
-                'id': f"voltable_{bp.botid}"
-                }), className=format_tabs)
-        ]),
-        dcc.Tab(label='Raw Data', children=[
-            html.Div(dash_inputbuilder({
+        dcc.Tab(html.Div(dash_inputbuilder({
+            'inputtype': 'table',
+            'id': f"voltable_{bp.botid}"
+            }), className=format_tabs), label='Volatility Metrics'),
+        dcc.Tab(html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"rawdata_{bp.botid}"
-                }), className=format_tabs)])
+                }), className=format_tabs), label='Raw Data')
     ])
 ])
 
@@ -232,7 +228,7 @@ layout = html.Div([
     )
 def gen_graph(ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, date, hovermode):
     if ticker:
-        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(staticmindate, ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
+        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
         new_min = mdf.index[mdf['date'] == df['date'].iloc[0].date()].tolist()[0]
         filterdf = filtered_double(df, '>=<=', str(mdf['date'][date[0]]), str(mdf['date'][date[1]]), 'date')
     else:

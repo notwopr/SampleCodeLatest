@@ -67,18 +67,18 @@ class PriceExplorerHelperFunctions:
         return voldf.to_dict('records'), tooltip
 
     def gen_graph_fig(self, filterdf, ticker, diffgraphcols, compgraphcols, hovermode):
-        fig = px.line(filterdf, x='date', y=ticker, markers=False)  # , template=chosenfigtemp)
+        fig = px.line(filterdf, x='date', y=ticker, markers=False)
         fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
         fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_diff = px.line(filterdf, x='date', y=diffgraphcols, markers=False)  # , template=chosenfigtemp)
+        fig_diff = px.line(filterdf, x='date', y=diffgraphcols, markers=False)
         fig_diff.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
         fig_diff.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_comp = px.line(filterdf, x='date', y=compgraphcols, markers=False)  # , template=chosenfigtemp)
+        fig_comp = px.line(filterdf, x='date', y=compgraphcols, markers=False)
         fig_comp.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
         fig_comp.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
         return fig, fig_diff, fig_comp
 
-    def gen_graph_df(self, staticmindate, ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
+    def gen_graph_df(self, ticker, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
         portfolio = ticker.copy()
         df = pricedf_daterange(ticker[0], '', '')
         for t in ticker[1:]:

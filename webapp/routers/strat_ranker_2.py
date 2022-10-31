@@ -64,20 +64,8 @@ layout = html.Div([
     ], id=f'input_{bp.botid}'),
     html.Br(),
     dcc.Tabs([
-        dcc.Tab(label='Visuals', children=[
+        dcc.Tab(html.Div([
             html.Div([
-                html.B('Choose graph style.'),
-                dash_inputbuilder({
-                    'id': f'chart_type_{bp.botid}',
-                    'inputtype': 'radio',
-                    'options': [{'label': x, 'value': x} for x in [
-                        'Scatter',
-                        'Box',
-                        'Violin']
-                        ],
-                    'value': 'Scatter',
-                    'inline': 'inline'
-                    }),
                 html.B('Choose which strats to hide/show.'),
                 dash_inputbuilder({
                     'id': f'hidestrat_{bp.botid}',
@@ -88,6 +76,7 @@ layout = html.Div([
                     'searchable': False,
                     'clearable': False
                     }),
+                html.Br(),
                 html.Span([html.B('Enter your stake (optional). '), html.Span("If you enter a stake, you also must enter the number of days for which you want to invest that stake.")]),
                 dash_inputbuilder({
                     'id': f'startcapital_{bp.botid}',
@@ -96,6 +85,7 @@ layout = html.Div([
                     'inputtype': 'number',
                     'min': 1
                     }),
+                html.Br(),
                 html.Div([
                     html.Span([html.B('Enter the investment period. '), html.Span("Enter the number of days (integer) to invest that stake.")]),
                     dash_inputbuilder({
@@ -106,6 +96,7 @@ layout = html.Div([
                         'min': 1,
                         'step': 1
                         })], id=f'stakeperiod_div_{bp.botid}'),
+                html.Br(),
                 html.Span([html.B('Hover Options:')]),
                 dash_inputbuilder({
                     'id': f'hovermode_{bp.botid}',
@@ -114,11 +105,28 @@ layout = html.Div([
                     'value': 'closest',
                     'inline': 'inline'
                     }),
-                dcc.Graph(id=f"rankmetricgraph_{bp.botid}"),
-                dcc.Graph(id=f"profilegraph_{bp.botid}"),
-                dcc.Graph(id=f"abovegraph_{bp.botid}")
-            ], id=f'displayresult_{bp.botid}')], className=format_tabs),
-        dcc.Tab(label='Rankings', children=[
+                html.Br(),
+                dcc.Tabs([
+                    dcc.Tab(html.Div([
+                        html.B('Choose graph style.'),
+                        dash_inputbuilder({
+                            'id': f'chart_type_{bp.botid}',
+                            'inputtype': 'radio',
+                            'options': [{'label': x, 'value': x} for x in [
+                                'Scatter',
+                                'Box',
+                                'Violin']
+                                ],
+                            'value': 'Scatter',
+                            'inline': 'inline'
+                            }),
+                        dcc.Graph(id=f"rankmetricgraph_{bp.botid}")
+                        ], className=format_tabs), label='Distribution Graph'),
+                    dcc.Tab(html.Div(dcc.Graph(id=f"profilegraph_{bp.botid}"), className=format_tabs), label='Profile Graph'),
+                    dcc.Tab(html.Div(dcc.Graph(id=f"abovegraph_{bp.botid}"), className=format_tabs), label='Above Graph')
+                ])
+            ], id=f'displayresult_{bp.botid}')], className=format_tabs), label='Visuals'),
+        dcc.Tab(html.Div([
             html.Span([html.B('Select a Ranking Schema:')]),
             dash_inputbuilder({
                 'id': f'rankingschema_{bp.botid}',
@@ -140,8 +148,8 @@ layout = html.Div([
                 'inputtype': 'table',
                 'id': f"rankingsource_{bp.botid}"
                 }), hidden='hidden')
-        ], id=f'rankingtab_{bp.botid}', className=format_tabs),
-        dcc.Tab(label='All Samples', children=[
+        ], className=format_tabs), label='Rankings', id=f'rankingtab_{bp.botid}'),
+        dcc.Tab(html.Div([
             dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"sampleschart_{bp.botid}",
@@ -151,7 +159,7 @@ layout = html.Div([
                 'inputtype': 'table',
                 'id': f"sampleschartsource_{bp.botid}"
                 }), hidden='hidden')
-        ], id=f'sampletab_{bp.botid}', className=format_tabs)
+        ], className=format_tabs), label='All Samples', id=f'sampletab_{bp.botid}')
         ])
 ])
 
