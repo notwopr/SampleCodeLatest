@@ -149,8 +149,9 @@ layout = html.Div([
         html.Table(gen_tablecontents(tbodydata), style={'width': '100%'}),
         prompt_builder({
             'id': f'submitbutton_{bp.botid}',
-            'inputtype': 'button_submit',
-            })
+            'inputtype': 'button_submit'
+            }),
+        html.Span(id=f'featurestatus_{bp.botid}', className='text-warning')
     ], id=f'input_{bp.botid}'),
     html.Div(id=f'preview_{bp.botid}'),
     html.Div(id=f'output_{bp.botid}'),
@@ -325,13 +326,14 @@ def preview_inputs(strat, period, num_periods, start_date, min_age, benchmark, s
 # update stock data
 @app.callback(
     Output(f'submitbutton_{bp.botid}', 'disabled'),
+    Output(f'featurestatus_{bp.botid}', 'children'),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
     )
 def update_stockdata(n_clicks):
     if _machine.machinename == 'awsbeanstalk':
-        return True
+        return True, 'Feature disabled.'
     else:
-        return False
+        return False, None
 
 
 @app.callback(

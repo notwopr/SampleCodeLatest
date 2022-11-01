@@ -43,6 +43,7 @@ class IngredientSettingsDatabase:
         ('seglenmode', 'm5', 'string', 'choices', ['flat', 'positive', 'negative']),
         ('changetype', 'm6', 'string', 'choices', ['pos', 'neg']),
         ('accret_type', 'm7', 'string', 'choices', ['pos', 'neg', 'zero']),
+        ('benchticker', 'm8', 'string', 'choices', ['^DJI', '^INX', '^IXIC']),
     ]
 
     def __init__(self):

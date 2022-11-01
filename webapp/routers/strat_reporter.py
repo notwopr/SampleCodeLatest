@@ -30,6 +30,7 @@ from newbacktest.baking.baker_stratpool import Baker
 from newbacktest.dataframe_operations import DataFrameOperations
 from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
+from ..graphing.grapher_helper_volstats import VolStatFunctions
 
 benchmarkdata = getbenchdates(benchmarks)
 bp = BotParams(
@@ -89,11 +90,7 @@ layout = html.Div([
                 'id': f"result_table_{bp.botid}"
                 }), className=format_tabs), label='Full Ranking', id=f'tab_fullranking_{bp.botid}'),
         dcc.Tab(html.Div(GraphAssets(bp).perfgraphtab, className=format_tabs), label='Performance Graph'),
-        ]),
-    html.Div(dash_inputbuilder({
-        'inputtype': 'table',
-        'id': f"graphdf_{bp.botid}"
-        }), id=f"hidden_{bp.botid}", hidden='hidden')
+        ])
 ])
 
 
@@ -184,9 +181,11 @@ def show_portcurve_option(ticker, calib, portcurvevalue):
     Output(f"graphdiff_{bp.botid}", "figure"),
     Output(f"graphcomp_{bp.botid}", "figure"),
     Output(f"graphdf_{bp.botid}", "data"),
+    Output(f"sd_bydd_{bp.botid}", "options"),
     Input(f"perf_graph_ticker_{bp.botid}", "value"),
     Input(f'datepicker_single_{bp.botid}', "date"),
     Input(f"calib_{bp.botid}", "value"),
+    Input(f"sd_bydd_{bp.botid}", "value"),
     Input(f"contour_{bp.botid}", "value"),
     Input(f"graphcompoptions_{bp.botid}", "value"),
     Input(f"graphdiff_mode_{bp.botid}", "value"),
@@ -196,17 +195,18 @@ def show_portcurve_option(ticker, calib, portcurvevalue):
     Input(f"bench_{bp.botid}", 'value'),
     Input(f"hovermode_{bp.botid}", 'value')
     )
-def gen_graph(tickers, invest_startdate, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode):
+def gen_graph(tickers, invest_startdate, calib, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode):
     if tickers:
-        df, pricegraphcols, compgraphcols, diffgraphcols, new_sd, all_sd, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, None, None, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode)
+        df, pricegraphcols, compgraphcols, diffgraphcols, new_sd, all_sd, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, None, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode)
         df = DataFrameOperations().filtered_single(df, '<=', invest_startdate, 'date')
     else:
         df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
         pricegraphcols, compgraphcols, diffgraphcols, tickers = '$', '$', '$', '$'
         yaxis = '$'
         yaxis_diff = '%'
+        all_sd = []
     fig, fig_diff, fig_comp = GrapherHelperFunctions().gen_graph_fig(df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff)
-    return fig, fig_diff, fig_comp, df.to_dict('records')
+    return fig, fig_diff, fig_comp, df.to_dict('records'), all_sd
 
 
 # sort raw data table
@@ -231,18 +231,23 @@ def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
     )
 def show_diffcomp_options(contour):
     return GrapherHelperFunctions().show_diffcomp_options(contour)
-#
-#
-# # get volstats
-# @app.callback(
-#     Output(f"voltable_{bp.botid}", "data"),
-#     Output(f"voltable_{bp.botid}", "tooltip_header"),
-#     Input(f"perf_graph_ticker_{bp.botid}", "value"),
-#     Input(f"portcurve_{bp.botid}", "value"),
-#     Input(f"bench_{bp.botid}", 'value'),
-#     Input(f"voltable_{bp.botid}", 'sort_by'),
-#     Input(f"voltable_{bp.botid}", "data"),
-#     Input(f"graphdf_{bp.botid}", "data")
-#     )
-# def gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable):
-#     return GrapherHelperFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable)
+
+
+# get volstats
+@app.callback(
+    Output(f"voltable_{bp.botid}", "data"),
+    Output(f"voltable_{bp.botid}", "tooltip_header"),
+    Input(f"perf_graph_ticker_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value"),
+    Input(f"bench_{bp.botid}", 'value'),
+    Input(f"voltable_{bp.botid}", 'sort_by'),
+    Input(f"voltable_{bp.botid}", "data"),
+    Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f'voltbutton_{bp.botid}', "n_clicks"),
+    prevent_initial_call=True,
+    )
+def gen_volstats(ticker, portcurve, bench, sort_by, voldata, invest_startdate, n_clicks):
+    if n_clicks and ticker:
+        return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, invest_startdate)
+    else:
+        return pd.DataFrame(data=['No data.']).to_dict('records'), None

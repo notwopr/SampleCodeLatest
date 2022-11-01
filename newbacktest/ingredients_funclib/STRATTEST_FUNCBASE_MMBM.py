@@ -26,6 +26,8 @@ from newbacktest.ingredients_funclib.STRATTEST_FUNCBASE_RAW import getallseglens
 from Modules.price_calib import add_calibratedprices
 from Modules.price_history_slicing import pricedf_daterange, trimdfbydate
 from newbacktest.baking.curvetype import CurveType
+from newbacktest.datasource import DataSource
+from newbacktest.dataframe_operations import DataFrameOperations
 
 
 # calc stat on price series
@@ -96,6 +98,28 @@ def allpctdrops_single(uppercol, lowercol, stat_type, seriesdata):
     return getdropstat_single(nonzerodrops, stat_type, seriesdata)
 
 
+# calc dropscore (dropprev * dropmag)
+def dropscore_single(uppercol, lowercol, seriesdata):
+    lowerseries = seriesdata if lowercol == 'raw' else CurveType().transform(seriesdata, 0, lowercol, 'removeall')
+    upperseries = seriesdata if uppercol == 'raw' else CurveType().transform(seriesdata, 0, uppercol, 'removeall')
+    nonzerodrops = getnonzerodrops(upperseries, lowerseries)
+    dropprevalence = getdropstat_single(nonzerodrops, 'prev', seriesdata)
+    dropmag = getdropstat_single(nonzerodrops, 'avg', seriesdata)
+    return dropprevalence * dropmag
+
+
+# ratio of stock dropscore / bench dropscore
+def dropscoreratio_single(benchticker, uppercol, lowercol, invest_startdate, seriesdata):
+    stockds = dropscore_single(uppercol, lowercol, seriesdata)
+    ds = DataSource().opends('eodprices_bench')
+    ds = DataFrameOperations().filter_bycolandrow_single(ds, '<=', invest_startdate, 'date', [benchticker])
+    benchseriesuntrimmed = ds[benchticker]
+    benchseriesdata = CurveType().transform(benchseriesuntrimmed, len(seriesdata)-1, 'raw', 'ffillandremove')
+
+    benchds = dropscore_single(uppercol, lowercol, benchseriesdata)
+    return 1 if benchds == 0 else stockds / benchds
+
+
 '''UNREVISED CODE'''
 
 
@@ -111,48 +135,6 @@ def fatarea_single(prices, uppercol, lowercol, datarangecol):
 def unifatshellraw_single(prices, focuscol, idealcol, stat_type):
     return getstatval((prices[focuscol] - prices[idealcol]) / prices[idealcol], stat_type)
 
-
-# calc dropprev
-def dropprev_single(prices, uppercol, lowercol):
-    nonzerodrops = getnonzerodrops(prices, uppercol, lowercol)
-    return getdropstat_single(prices, nonzerodrops, 'prev')
-
-
-# calc dropmag
-def dropmag_single(prices, uppercol, lowercol, stat_type):
-    nonzerodrops = getnonzerodrops(prices, uppercol, lowercol)
-    return getdropstat_single(prices, nonzerodrops, stat_type)
-
-
-# calc dropscore (dropprev * dropmag)
-def dropscore_single(prices, uppercol, lowercol, stat_type):
-    nonzerodrops = getnonzerodrops(prices, uppercol, lowercol)
-    dropprevalence = getdropstat_single(prices, nonzerodrops, 'prev')
-    dropmag = getdropstat_single(prices, nonzerodrops, stat_type)
-    dropscore = dropprevalence * dropmag
-    return dropscore
-
-
-# ratio of stock dropscore / bench dropscore
-def dropscoreratio_single(prices, uppercol, lowercol, stat_type, benchticker):
-    # get stock dropscore
-    stockds = dropscore_single(prices, uppercol, lowercol, stat_type)
-    benchprices = pricedf_daterange(benchticker, '', '')
-    # if age stock < age bench, trim bench history to stock's
-    if len(prices) < len(benchprices):
-        benchprices = trimdfbydate(benchprices, 'date', str(prices.iat[0, 0].date()), str(prices.iat[-1, 0].date()))
-        benchprices.reset_index(drop=True, inplace=True)
-    allprices = benchprices[benchticker].tolist()
-    baremaxrawpricelist = baremax_cruncher(allprices)
-    benchprices[f'{benchticker}_baremax'] = np.array(baremaxrawpricelist)
-    # get bench dropscore
-    benchds = dropscore_single(benchprices, f'{benchticker}_baremax', benchticker, stat_type)
-    # get ratio
-    if benchds == 0:
-        dropratio = 1
-    else:
-        dropratio = stockds / benchds
-    return dropratio
 
 
 # finds diff between uppercol and lowercol for the last date of price df

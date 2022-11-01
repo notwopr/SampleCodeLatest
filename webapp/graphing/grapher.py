@@ -4,7 +4,7 @@
 from dash import dcc, html
 #   LOCAL APPLICATION IMPORTS
 from formatting import format_tabs
-from ..dashinputs import gen_tablecontents, dash_inputbuilder
+from ..dashinputs import gen_tablecontents, dash_inputbuilder, prompt_builder
 
 
 class GraphAssets:
@@ -37,6 +37,15 @@ class GraphAssets:
                 'prompt': '[*only available when normalized pricing is chosen and more than one stock is selected.  This option shows an aggregate growth curve of all selected stocks.]',
                 'inputtype': 'checklist',
                 'options': []
+                },
+            {
+                'id': f'sd_bydd_{bp.botid}',
+                'prompt': 'Choose one of the start dates of one of the tickers already graphed.',
+                'inputtype': 'dropdown',
+                'options': [],
+                'placeholder': 'Choose a start date',
+                'multi': False,
+                'clearable': True
                 },
             {
                 'id': f'contour_{bp.botid}',
@@ -123,7 +132,7 @@ class GraphAssets:
             html.Table(gen_tablecontents(self.perf_graph_inputs)),
             html.Div(dash_inputbuilder({
                 'inputtype': 'table',
-                'id': f"perfgraphsourcetable_{bp.botid}"
+                'id': f"graphdf_{bp.botid}"
                 }), id=f"hidden_{bp.botid}", hidden='hidden'),
             html.Br(),
             dcc.Tabs([
@@ -137,10 +146,19 @@ class GraphAssets:
                     dcc.Graph(id=f"graphcomp_{bp.botid}")
                     ], className=format_tabs), label='Comparative'),
                 dcc.Tab(label='Volatility Metrics', children=[
-                    html.Div(dash_inputbuilder({
-                        'inputtype': 'table',
-                        'id': f"voltable_{bp.botid}"
-                        }), className=format_tabs)
+                    html.Div([
+                        html.Table(gen_tablecontents([{
+                            'id': f'voltbutton_{bp.botid}',
+                            'inputtype': 'button_submit',
+                            'buttontext': 'Calculate Volatility',
+                            'prompt': 'Note: may take some time to complete.'
+                            }])),
+                        html.Br(),
+                        dash_inputbuilder({
+                            'inputtype': 'table',
+                            'id': f"voltable_{bp.botid}"
+                            })
+                        ], className=format_tabs)
                 ]),
                 dcc.Tab(label='Raw Data', children=[
                     html.Div(dash_inputbuilder({

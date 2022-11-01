@@ -103,7 +103,7 @@ class Baker:
         df.reset_index(drop=True, inplace=True)
         return df
 
-    def _bake_singleticker(self, ingredientlist, dfiteritem):
+    def _bake_singleticker(self, ingredientlist, date, dfiteritem):
         ticker = dfiteritem[0]
         seriesdata = dfiteritem[1]
         single_sr_result = {'stock': ticker}
@@ -111,7 +111,7 @@ class Baker:
             metricfuncname = i.itemdata['metricfunc']
             newseries = CurveType().transform(seriesdata, i.itemdata['look_back'], i.itemdata['curvetype'], i.itemdata['nantreatment'])
 
-            dictofargs = MetricFunctionDatabase().get_metricfuncargdict(metricfuncname, i.itemdata, newseries)
+            dictofargs = MetricFunctionDatabase().get_metricfuncargdict(metricfuncname, i.itemdata, date, newseries)
             metricfuncobj = MetricFunctionDatabase().metricfuncname_to_metricfuncobj(metricfuncname)
             single_sr_result.update(
                 {i.colname: metricfuncobj(**dictofargs)}
@@ -138,7 +138,7 @@ class Baker:
             ds = DataSource().opends(datasourcetype)
             ds = DataFrameOperations().filter_bycolandrow_single(ds, '<=', date, 'date', tickers)
             ingredientlist = [IngredientsDatabase().view_item(igcode) for igcode in igcodes]
-            r = MultiProcessor().dataframe_reduce_bycol(ds, self._bake_singleticker, (ingredientlist,))
+            r = MultiProcessor().dataframe_reduce_bycol(ds, self._bake_singleticker, (ingredientlist, date))
             allresults.append(pd.DataFrame(data=r))
         # join results into final df
         resultdf = DataFrameOperations().join_matrices('stock', allresults)

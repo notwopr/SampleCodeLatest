@@ -67,15 +67,17 @@ class MetricFunctionDatabase(AbstractDatabase):
         metricfuncobj = self.metricfuncname_to_metricfuncobj(metricfuncname)
         return ModuleOperations().get_function_parameternames(metricfuncobj)
 
-    def get_metricfuncargdict(self, metricfuncname, igsettingsdict, seriesdata):
+    def get_metricfuncargdict(self, metricfuncname, igsettingsdict, date, seriesdata):
         '''given metricfuncname, ingredient and iterable specific input data, return dictionary of metricfunc args'''
         '''all metricfunctions across the entire codebase that require seriesdata as input needs to use the name 'seriesdata' in its definition'''
         argdict = {}
         for argname in self.get_metricfuncargnames(metricfuncname):
             argval = igsettingsdict.get(argname, 0)
-            if argname != "seriesdata" and not argval:
+            if argname != "seriesdata" and argname != 'invest_startdate' and not argval:
                 raise ValueError(f'The metricfunc "{metricfuncname}" requires a "{argname}" parameter, but it is not found in the ingredient settings dict.\nOffending ingredient:\n{igsettingsdict}')
             if argname == 'seriesdata':
                 argval = seriesdata
+            if argname == 'invest_startdate':
+                argval = date
             argdict[argname] = argval
         return argdict

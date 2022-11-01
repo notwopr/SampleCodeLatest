@@ -29,7 +29,7 @@ class IngredientsDatabase(AbstractKeyValDatabase):
 
     def _check_metricspecific_dependencies(self, itemdata):
         for argname in MetricFunctionDatabase().get_metricfuncargnames(itemdata['metricfunc']):
-            if argname != 'seriesdata' and not itemdata.get(argname, 0):
+            if argname != 'seriesdata' and argname != 'invest_startdate' and not itemdata.get(argname, 0):
                 raise ValueError(f'The metricfunc "{itemdata["metricfunc"]}" requires a "{argname}" parameter, but it is not found in the ingredient settings dict.\nOffending ingredient:\n{itemdata}')
 
     def _check_ingredient_dependencies(self, itemdata):
