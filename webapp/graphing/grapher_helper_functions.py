@@ -2,14 +2,9 @@
 #   STANDARD LIBRARY IMPORTS
 from itertools import permutations
 #   THIRD PARTY IMPORTS
-from dash import callback_context
-import pandas as pd
 import plotly.express as px
 import numpy as np
 #   LOCAL APPLICATION IMPORTS
-from ..datatables import DataTableOperations
-from webapp.routers.pricehistoryexplorer_helper_volstats_definitions import volstat_definitions
-from webapp.routers.pricehistoryexplorer_helper_volstats import getallmetricvalsdf
 from newbacktest.dataframe_operations import DataFrameOperations
 from newbacktest.datasource import DataSource
 from newbacktest.curvecalibrator import CurveCalibrator
@@ -33,14 +28,14 @@ class GrapherHelperFunctions:
             p = permutations(contour + ['raw'], 2)
             return [{'label': f'{i[0]} to {i[1]}', 'value': f'{i[0]} {i[1]}'} for i in p], None, ['all', 'raw']+contour, 'all'
 
-    def gen_graph_fig(self, filterdf, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff):
-        fig = px.line(filterdf, x='date', y=pricegraphcols, markers=False)
+    def gen_graph_fig(self, df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff):
+        fig = px.line(df, x='date', y=pricegraphcols, markers=False)
         fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxis)
         fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_diff = px.line(filterdf, x='date', y=diffgraphcols, markers=False)
+        fig_diff = px.line(df, x='date', y=diffgraphcols, markers=False)
         fig_diff.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxis_diff)
         fig_diff.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_comp = px.line(filterdf, x='date', y=compgraphcols, markers=False)
+        fig_comp = px.line(df, x='date', y=compgraphcols, markers=False)
         fig_comp.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title='% (1=100%)')
         fig_comp.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
         return fig, fig_diff, fig_comp
@@ -74,28 +69,27 @@ class GrapherHelperFunctions:
             df[diffcols] = df[sourcecols].pct_change(periods=period, fill_method='ffill')
         return diffcols
 
-    def gen_graph_df(self, tickers, calib, sd, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode):
+    def gen_graph_df(self, tickers, calib, start_date, end_date, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks):
         yaxis = '$'
         portfolio = tickers.copy()
-        ds = DataSource().opends('eodprices')
+        ds = DataSource().opends('eodprices_commonplusbench')
         df = DataFrameOperations().filter_column(ds, ['date']+tickers).copy()
         df.ffill(inplace=True)
         df.dropna(inplace=True, how='all', subset=tickers)
-        new_sd = str(df['date'].iloc[0].date())  # shift graph&slider to start at beginning of oldest selected stock
-        all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in tickers]
         df.reset_index(inplace=True, drop=True)
+
+        all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in tickers]
+
+        df = DataFrameOperations().filtered_double(df, '>=<=', start_date, end_date, 'date')
+        df.reset_index(drop=True, inplace=True)
+
         if benchmarks:
             bdf = DataSource().opends('eodprices_bench')
             bdf.ffill(inplace=True)
             bdf = DataFrameOperations().filter_column(bdf, ['date']+benchmarks)
             df = df.join(bdf.set_index('date'), how='left', on="date")
         tickers.extend(benchmarks)
-        if sd is not None:  # choose a diff start from datepicker
-            df = DataFrameOperations().filtered_single(df, '>=', sd, 'date')
-            df.reset_index(drop=True, inplace=True)
-        if sd_bydd is not None:  # choose a diff start from selected stocks list
-            df = DataFrameOperations().filtered_single(df, '>=', sd_bydd, 'date')
-            df.reset_index(drop=True, inplace=True)
+
         if calib == 'normalize':
             normvers = 'norm'
             CurveCalibrator().normalize_curves(df, normvers, tickers)
@@ -124,4 +118,4 @@ class GrapherHelperFunctions:
         if gdm == 'pctchange':
             yaxis_diff = '% (1=100%)'
 
-        return df, pricegraphcols, compgraphcols, diffgraphcols, new_sd, all_sd, yaxis, yaxis_diff
+        return df, pricegraphcols, compgraphcols, diffgraphcols, all_sd, yaxis, yaxis_diff

@@ -48,6 +48,12 @@ class GraphAssets:
                 'clearable': True
                 },
             {
+                'id': f'datepicker_{bp.botid}',
+                'prompt': 'Select a date range.',
+                'inputtype': 'datepicker_range',
+                'clearable': True
+                },
+            {
                 'id': f'contour_{bp.botid}',
                 'prompt': 'Select whether you want to see the graphs in a different contour.',
                 'details': 'Baremax displays the current all-time high price.  Baremin displays the floor price.  Trueline displays the midpoint between baremax and baremin prices.  Straight displays the straight line from first to last price.',
@@ -130,6 +136,11 @@ class GraphAssets:
 
         self.perfgraphtab = html.Div([
             html.Table(gen_tablecontents(self.perf_graph_inputs)),
+            # html.Div(dash_inputbuilder({
+            #     'id': f'dateslider_{bp.botid}',
+            #     'prompt': 'Date Range Slider',
+            #     'inputtype': 'rangeslider'
+            #     }), id=f"datesliderdiv_{bp.botid}"),
             html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"graphdf_{bp.botid}"

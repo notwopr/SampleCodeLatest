@@ -237,17 +237,17 @@ def show_diffcomp_options(contour):
 @app.callback(
     Output(f"voltable_{bp.botid}", "data"),
     Output(f"voltable_{bp.botid}", "tooltip_header"),
-    Input(f"perf_graph_ticker_{bp.botid}", "value"),
-    Input(f"portcurve_{bp.botid}", "value"),
-    Input(f"bench_{bp.botid}", 'value'),
-    Input(f"voltable_{bp.botid}", 'sort_by'),
-    Input(f"voltable_{bp.botid}", "data"),
-    Input(f'datepicker_single_{bp.botid}', "date"),
     Input(f'voltbutton_{bp.botid}', "n_clicks"),
+    State(f"perf_graph_ticker_{bp.botid}", "value"),
+    State(f"portcurve_{bp.botid}", "value"),
+    State(f"bench_{bp.botid}", 'value'),
+    State(f"voltable_{bp.botid}", 'sort_by'),
+    State(f"voltable_{bp.botid}", "data"),
+    State(f'datepicker_single_{bp.botid}', "date"),
     prevent_initial_call=True,
     )
-def gen_volstats(ticker, portcurve, bench, sort_by, voldata, invest_startdate, n_clicks):
-    if n_clicks and ticker:
+def gen_volstats(n_clicks, ticker, portcurve, bench, sort_by, voldata, invest_startdate):
+    if ticker:
         return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, invest_startdate)
     else:
         return pd.DataFrame(data=['No data.']).to_dict('records'), None

@@ -96,5 +96,10 @@ if __name__ == '__main__':
     allprice_matrix(tickerlistcommon_source, STOCKPRICES, PRICES)
     #allprice_matrix('faang', STOCKPRICES, PRICES)
     allprice_matrix('bench', INDEXPRICES, PRICES)
+    '''join common + bench matrix'''
+    # stockdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices'])))
+    # benchdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices_bench'])))
+    # fulldf = DataFrameOperations().join_matrices('date', [benchdf, stockdf])
+    # savetopkl_fullpath(Path(join_str([DirPaths().eodprices, f"{FileNames().fn_pricematrix_commonplusbench}.pkl"])), fulldf)
 
     playsound('C:\Windows\Media\Ring03.wav')

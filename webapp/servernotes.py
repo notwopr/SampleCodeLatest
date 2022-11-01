@@ -40,10 +40,9 @@ def getstockdata():
     tickerlist_common = readpkl(tickerlistcommon_name, TICKERS)
     daterangefile = daterangefile[daterangefile['stock'].isin(tickerlist_common['symbol'])]
     # shift latest date by one to account for tiingo data sync idiosyncracy
-    latestdate = str(dt.date.fromisoformat(np.max(daterangefile['last_date'])) - dt.timedelta(days=1))
     return {
         'earliest': np.min(daterangefile['first_date']),
-        'latest': latestdate,
+        'latest': str(dt.date.fromisoformat(np.max(daterangefile['last_date'])) - dt.timedelta(days=1)),
         'numtickers': len(tickerlist_common['symbol'])
         }
 

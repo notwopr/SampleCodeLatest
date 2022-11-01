@@ -2,6 +2,7 @@ from newbacktest.ingredients.db_ingredient_settings import IngredientSettingsDat
 from newbacktest.ingredients.db_metricfunction import MetricFunctionDatabase
 from newbacktest.symbology.symbology import Symbology
 from newbacktest.abstractclasses.class_abstract_dbitem import AbstractDatabaseItem
+from newbacktest.ingredients.class_ingredient_colnamegenerator import ColNameGenerator
 
 
 class Ingredient(AbstractDatabaseItem):
@@ -42,19 +43,20 @@ class Ingredient(AbstractDatabaseItem):
         return itemcode
 
     def _set_colname(self):
-        exclusions = [
-                'filterdirection',
-                'threshold_bybestbench_better',
-                'threshold_type',
-                'threshold_buffer',
-                'threshold_value',
-                'filterby',
-                'ranktype',
-                'rankdirection',
-                'weight']
-        colnamelist = [f"{k}{v}|" for k, v in self.itemdata.items() if k not in exclusions]
-        colnamelist.sort()
-        colname = ''.join(colnamelist)
+        # exclusions = [
+        #         'filterdirection',
+        #         'threshold_bybestbench_better',
+        #         'threshold_type',
+        #         'threshold_buffer',
+        #         'threshold_value',
+        #         'filterby',
+        #         'ranktype',
+        #         'rankdirection',
+        #         'weight']
+        # colnamelist = [f"{k}{v}|" for k, v in self.itemdata.items() if k not in exclusions]
+        # colnamelist.sort()
+        # colname = ''.join(colnamelist)
+        colname = ColNameGenerator().gen_colname(self.itemdata)
         print(f"{self._item_term} colname set to '{colname}'.")
         return colname
 

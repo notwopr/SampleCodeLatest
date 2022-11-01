@@ -2,7 +2,7 @@
 #   STANDARD LIBRARY IMPORTS
 #   THIRD PARTY IMPORTS
 #   LOCAL APPLICATION IMPORTS
-from newbacktest.ingredients.class_ingredient import Ingredient
+from newbacktest.ingredients.class_ingredient_colnamegenerator import ColNameGenerator
 
 
 class VolStatProfile:
@@ -122,7 +122,7 @@ class VolStatProfile:
             'dropscoreratio_S&P 500': 'The dropscore ratio is the ratio of the dropscore of a given stock to a chosen benchmark.  For example, dropscoreratio_NASDAQ is the ratio of the dropscore of the stock in question to the dropscore of the NASDAQ.  Thus, a dropscoreratio of 1 means the stock does not dip below its own baremaxraw price anymore frequently and drastically than NASDAQ.  One could interpret this as one measure of how volatile the stock is as compared to the benchmark chosen.',
             'dropscoreratio_NASDAQ': 'The dropscore ratio is the ratio of the dropscore of a given stock to a chosen benchmark.  For example, dropscoreratio_NASDAQ is the ratio of the dropscore of the stock in question to the dropscore of the NASDAQ.  Thus, a dropscoreratio of 1 means the stock does not dip below its own baremaxraw price anymore frequently and drastically than NASDAQ.  One could interpret this as one measure of how volatile the stock is as compared to the benchmark chosen.'
             }
-        self.indextonickname = {
+        self.nicknamebyindex = {
             0: 'fatscore_baremaxtoraw',
             1: 'fatscore_baremaxtobaremin',
             2: 'drop_mag',
@@ -132,6 +132,4 @@ class VolStatProfile:
             6: 'dropscoreratio_S&P 500',
             7: 'dropscoreratio_NASDAQ'
             }
-        self.ingredientobjects = {i: Ingredient(ingredient, self.indextonickname[i], self.volstat_definitions[self.indextonickname[i]]) for i, ingredient in enumerate(self.volstatprofile[0])}
-        self.colnametonickname = {ig.colname: ig.nickname for ig in self.ingredientobjects.values()}
-        self.igcodedict = {'eodprices': [ig.itemcode for ig in self.ingredientobjects.values()]}
+        self.nicknamebycolname = {ColNameGenerator().gen_colname(ingredient): self.nicknamebyindex[i] for i, ingredient in enumerate(self.volstatprofile[0])}
