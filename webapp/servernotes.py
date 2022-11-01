@@ -34,15 +34,25 @@ def getlastmodified(folder, filename):
     return modtime
 
 
-def getstockdata():
-    daterangefile = readpkl(daterangedb_name, DATE_RESULTS)
-    # limit to common stock
-    tickerlist_common = readpkl(tickerlistcommon_name, TICKERS)
-    daterangefile = daterangefile[daterangefile['stock'].isin(tickerlist_common['symbol'])]
+def get_ipodate(ticker):
+    daterangefile = readpkl(FileNames().fn_daterangedb, Path(DirPaths().date_results))
+    return daterangefile[daterangefile['stock'] == ticker]['first_date'].item()
+
+
+def get_minmaxdates(tickers):
+    '''returns the earliest date of oldest stock in group and the latest date available for stock in group'''
+    daterangefile = readpkl(FileNames().fn_daterangedb, Path(DirPaths().date_results))
+    daterangefile = daterangefile[daterangefile['stock'].isin(tickers)]
     # shift latest date by one to account for tiingo data sync idiosyncracy
+    return [np.min(daterangefile['first_date']), str(dt.date.fromisoformat(np.max(daterangefile['last_date'])) - dt.timedelta(days=1))]
+
+
+def getstockdata():
+    tickerlist_common = readpkl(tickerlistcommon_name, TICKERS)
+    minmaxdates = get_minmaxdates(tickerlist_common['symbol'])
     return {
-        'earliest': np.min(daterangefile['first_date']),
-        'latest': str(dt.date.fromisoformat(np.max(daterangefile['last_date'])) - dt.timedelta(days=1)),
+        'earliest': minmaxdates[0],
+        'latest': minmaxdates[1],
         'numtickers': len(tickerlist_common['symbol'])
         }
 

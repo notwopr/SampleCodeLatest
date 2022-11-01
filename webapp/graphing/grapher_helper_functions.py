@@ -76,12 +76,12 @@ class GrapherHelperFunctions:
         df = DataFrameOperations().filter_column(ds, ['date']+tickers).copy()
         df.ffill(inplace=True)
         df.dropna(inplace=True, how='all', subset=tickers)
-        df.reset_index(inplace=True, drop=True)
-
-        all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in tickers]
-
+        # df.reset_index(inplace=True, drop=True)
         df = DataFrameOperations().filtered_double(df, '>=<=', start_date, end_date, 'date')
+        # df = DataFrameOperations().filtered_single(df, '<=', end_date, 'date')
         df.reset_index(drop=True, inplace=True)
+
+        # all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in tickers]
 
         if benchmarks:
             bdf = DataSource().opends('eodprices_bench')
@@ -118,4 +118,4 @@ class GrapherHelperFunctions:
         if gdm == 'pctchange':
             yaxis_diff = '% (1=100%)'
 
-        return df, pricegraphcols, compgraphcols, diffgraphcols, all_sd, yaxis, yaxis_diff
+        return df, pricegraphcols, compgraphcols, diffgraphcols, yaxis, yaxis_diff

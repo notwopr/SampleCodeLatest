@@ -27,7 +27,7 @@ from webapp.servernotes import getbenchdates
 from globalvars import benchmarks
 from newbacktest.stratpools.db_stratpool import StratPoolDatabase
 from newbacktest.baking.baker_stratpool import Baker
-from newbacktest.dataframe_operations import DataFrameOperations
+# from newbacktest.dataframe_operations import DataFrameOperations
 from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
 from ..graphing.grapher_helper_volstats import VolStatFunctions
@@ -175,52 +175,6 @@ def show_portcurve_option(ticker, calib, portcurvevalue):
     return GrapherHelperFunctions().show_portcurve_option(ticker, calib, portcurvevalue)
 
 
-# gen performance graphs
-@app.callback(
-    Output(f"perf_graph_{bp.botid}", "figure"),
-    Output(f"graphdiff_{bp.botid}", "figure"),
-    Output(f"graphcomp_{bp.botid}", "figure"),
-    Output(f"graphdf_{bp.botid}", "data"),
-    Output(f"sd_bydd_{bp.botid}", "options"),
-    Input(f"perf_graph_ticker_{bp.botid}", "value"),
-    Input(f'datepicker_single_{bp.botid}', "date"),
-    Input(f"calib_{bp.botid}", "value"),
-    Input(f"sd_bydd_{bp.botid}", "value"),
-    Input(f"contour_{bp.botid}", "value"),
-    Input(f"graphcompoptions_{bp.botid}", "value"),
-    Input(f"graphdiff_mode_{bp.botid}", "value"),
-    Input(f"graphdiff_changecol_{bp.botid}", "value"),
-    Input(f"graphdiff_period_{bp.botid}", "value"),
-    Input(f"portcurve_{bp.botid}", "value"),
-    Input(f"bench_{bp.botid}", 'value'),
-    Input(f"hovermode_{bp.botid}", 'value')
-    )
-def gen_graph(tickers, invest_startdate, calib, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode):
-    if tickers:
-        df, pricegraphcols, compgraphcols, diffgraphcols, new_sd, all_sd, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, None, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode)
-        df = DataFrameOperations().filtered_single(df, '<=', invest_startdate, 'date')
-    else:
-        df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
-        pricegraphcols, compgraphcols, diffgraphcols, tickers = '$', '$', '$', '$'
-        yaxis = '$'
-        yaxis_diff = '%'
-        all_sd = []
-    fig, fig_diff, fig_comp = GrapherHelperFunctions().gen_graph_fig(df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff)
-    return fig, fig_diff, fig_comp, df.to_dict('records'), all_sd
-
-
-# sort raw data table
-# sourcetable is a hidden html DIV where orig graphdf is stored to be used by voldf and rawdatatable tab
-@app.callback(
-    Output(f"rawdata_{bp.botid}", "data"),
-    Input(f"rawdata_{bp.botid}", 'sort_by'),
-    Input(f"rawdata_{bp.botid}", "data"),
-    Input(f"graphdf_{bp.botid}", "data")
-    )
-def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
-    return DataTableOperations().return_sortedtable(sort_by, callback_context, rawdatatable, sourcetable).to_dict('records')
-
-
 # create options for diffgraph and comp graph
 @app.callback(
     Output(f"graphcompoptions_{bp.botid}", "options"),
@@ -233,6 +187,68 @@ def show_diffcomp_options(contour):
     return GrapherHelperFunctions().show_diffcomp_options(contour)
 
 
+# gen performance graphs
+@app.callback(
+    Output(f"perf_graph_{bp.botid}", "figure"),
+    Output(f"graphdiff_{bp.botid}", "figure"),
+    Output(f"graphcomp_{bp.botid}", "figure"),
+    Output(f"graphdf_{bp.botid}", "data"),
+    Output(f"sd_bydd_{bp.botid}", "options"),
+    Output(f'datepicker_{bp.botid}', "min_date_allowed"),
+    Output(f'datepicker_{bp.botid}', "max_date_allowed"),
+    Output(f'datepicker_{bp.botid}', "start_date"),
+    Output(f'datepicker_{bp.botid}', "end_date"),
+    Input(f"perf_graph_ticker_{bp.botid}", "value"),
+    Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f"calib_{bp.botid}", "value"),
+    Input(f"sd_bydd_{bp.botid}", "value"),
+    Input(f'datepicker_{bp.botid}', "start_date"),
+    Input(f'datepicker_{bp.botid}', "end_date"),
+    Input(f"contour_{bp.botid}", "value"),
+    Input(f"graphcompoptions_{bp.botid}", "value"),
+    Input(f"graphdiff_mode_{bp.botid}", "value"),
+    Input(f"graphdiff_changecol_{bp.botid}", "value"),
+    Input(f"graphdiff_period_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value"),
+    Input(f"bench_{bp.botid}", 'value'),
+    Input(f"hovermode_{bp.botid}", 'value')
+    )
+def gen_graph(tickers, invest_startdate, calib, sd_bydd, start_date, end_date, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode):
+    if tickers:
+        if sd_bydd:
+            start_date = sd_bydd
+        df, pricegraphcols, compgraphcols, diffgraphcols, all_sd, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, start_date, invest_startdate, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks)
+        # df, pricegraphcols, compgraphcols, diffgraphcols, new_sd, all_sd, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, None, sd_bydd, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode)
+        df_start = str(df['date'].iloc[0].date())
+        df_end = str(df['date'].iloc[-1].date())
+        min_date_allowed = df_start
+        max_date_allowed = df_end
+        # df = DataFrameOperations().filtered_single(df, '<=', invest_startdate, 'date')
+    else:
+        df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
+        pricegraphcols, compgraphcols, diffgraphcols = '$', '$', '$'
+        all_sd = []
+        yaxis = '$'
+        yaxis_diff = '%'
+        min_date_allowed = staticmindate
+        max_date_allowed = staticmaxdate
+
+    fig, fig_diff, fig_comp = GrapherHelperFunctions().gen_graph_fig(df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff)
+    return fig, fig_diff, fig_comp, df.to_dict('records'), all_sd, min_date_allowed, max_date_allowed, min_date_allowed, max_date_allowed
+    # return fig, fig_diff, fig_comp, df.to_dict('records'), all_sd
+
+
+# sort raw data table
+@app.callback(
+    Output(f"rawdata_{bp.botid}", "data"),
+    Input(f"rawdata_{bp.botid}", 'sort_by'),
+    Input(f"rawdata_{bp.botid}", "data"),
+    Input(f"graphdf_{bp.botid}", "data")
+    )
+def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
+    return DataTableOperations().return_sortedtable(sort_by, callback_context, rawdatatable, sourcetable).to_dict('records')
+
+
 # get volstats
 @app.callback(
     Output(f"voltable_{bp.botid}", "data"),
@@ -243,11 +259,12 @@ def show_diffcomp_options(contour):
     State(f"bench_{bp.botid}", 'value'),
     State(f"voltable_{bp.botid}", 'sort_by'),
     State(f"voltable_{bp.botid}", "data"),
-    State(f'datepicker_single_{bp.botid}', "date"),
+    # State(f'datepicker_single_{bp.botid}', "date"),
+    State(f"graphdf_{bp.botid}", "data"),
     prevent_initial_call=True,
     )
-def gen_volstats(n_clicks, ticker, portcurve, bench, sort_by, voldata, invest_startdate):
+def gen_volstats(n_clicks, ticker, portcurve, bench, sort_by, voldata, graphdfdata):
     if ticker:
-        return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, invest_startdate)
+        return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, graphdfdata)
     else:
         return pd.DataFrame(data=['No data.']).to_dict('records'), None

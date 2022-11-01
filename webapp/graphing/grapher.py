@@ -4,7 +4,7 @@
 from dash import dcc, html
 #   LOCAL APPLICATION IMPORTS
 from formatting import format_tabs
-from ..dashinputs import gen_tablecontents, dash_inputbuilder, prompt_builder
+from ..dashinputs import gen_tablecontents, dash_inputbuilder
 
 
 class GraphAssets:

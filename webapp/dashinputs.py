@@ -147,6 +147,15 @@ def prompt_builder(c):
 
 
 def gen_tablerow(r):
+    if r['inputtype'] == 'datepicker_range':
+        return html.Tr([
+                html.Td(dash_inputbuilder(r), id=f'inputfield_{r["id"]}', className=format_htmltable_leftcols),
+                html.Td([
+                    html.Span(r.get('prompt')),
+                    html.Br(),
+                    html.Span(id=f'minmaxinfo_{r["id"]}'),
+                    ], id=f'prompt_{r["id"]}', className=format_htmltable_rightcols)
+            ], title=r.get('details'))
     return html.Tr([
             html.Td(dash_inputbuilder(r), id=f'inputfield_{r["id"]}', className=format_htmltable_leftcols),
             html.Td(r.get('prompt'), id=f'prompt_{r["id"]}', className=format_htmltable_rightcols)
