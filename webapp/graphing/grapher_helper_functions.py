@@ -2,12 +2,15 @@
 #   STANDARD LIBRARY IMPORTS
 from itertools import permutations
 #   THIRD PARTY IMPORTS
+from dash import html
 import plotly.express as px
-import numpy as np
+import pandas as pd
 #   LOCAL APPLICATION IMPORTS
 from newbacktest.dataframe_operations import DataFrameOperations
 from newbacktest.datasource import DataSource
 from newbacktest.curvecalibrator import CurveCalibrator
+from webapp.servernotes import get_ipodate
+from globalvars import benchmarks as benchmarksinfo
 
 
 class GrapherHelperFunctions:
@@ -76,12 +79,8 @@ class GrapherHelperFunctions:
         df = DataFrameOperations().filter_column(ds, ['date']+tickers).copy()
         df.ffill(inplace=True)
         df.dropna(inplace=True, how='all', subset=tickers)
-        # df.reset_index(inplace=True, drop=True)
         df = DataFrameOperations().filtered_double(df, '>=<=', start_date, end_date, 'date')
-        # df = DataFrameOperations().filtered_single(df, '<=', end_date, 'date')
         df.reset_index(drop=True, inplace=True)
-
-        # all_sd = [{'label': f"{t}'s startdate", 'value': df['date'].iloc[sum(np.isnan(df[t]))]} for t in tickers]
 
         if benchmarks:
             bdf = DataSource().opends('eodprices_bench')
@@ -119,3 +118,53 @@ class GrapherHelperFunctions:
             yaxis_diff = '% (1=100%)'
 
         return df, pricegraphcols, compgraphcols, diffgraphcols, yaxis, yaxis_diff
+
+    def gen_graph_output(self, callback_context, tickers, min_date_allowed, max_date_allowed, sd_bydd, pick_start, pick_end, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode, dfcol):
+        nondatetriggers = [
+            callback_context.triggered[0]['prop_id'].startswith('calib'),
+            callback_context.triggered[0]['prop_id'].startswith('portcurve'),
+            callback_context.triggered[0]['prop_id'].startswith('contour'),
+            callback_context.triggered[0]['prop_id'].startswith('bench'),
+            callback_context.triggered[0]['prop_id'].startswith('hovermode'),
+            callback_context.triggered[0]['prop_id'].startswith('perf_graph_ticker')
+                ]
+        if tickers:
+            benchtickers = [benchmarksinfo[k]['ticker'] for k in benchmarksinfo]
+            toexclude = [t for t in tickers if t in benchtickers]
+            all_sd = [{'label': f"{t}'s startdate", 'value': get_ipodate(t)} for t in tickers]
+
+            '''modify date window'''
+            if callback_context.triggered[0]['prop_id'].startswith('datepicker'):
+                start_date = pick_start
+                end_date = pick_end
+                sd_bydd = None
+            elif sd_bydd and callback_context.triggered[0]['prop_id'].startswith('sd_bydd'):
+                start_date = sd_bydd
+                end_date = pick_end
+            # do not change graph window if graph already present (that's what dfcol is for)
+            elif any(nondatetriggers) and dfcol > 2:
+                start_date = pick_start
+                end_date = pick_end
+            else:
+                start_date = min_date_allowed
+                end_date = max_date_allowed
+
+            df, pricegraphcols, compgraphcols, diffgraphcols, yaxis, yaxis_diff = GrapherHelperFunctions().gen_graph_df(tickers, calib, start_date, end_date, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks)
+        else:
+            df = pd.DataFrame(data={'date': pd.date_range(min_date_allowed, max_date_allowed), '$': 0})
+            pricegraphcols, compgraphcols, diffgraphcols = '$', '$', '$'
+            all_sd = []
+            yaxis = '$'
+            yaxis_diff = '%'
+            start_date = min_date_allowed
+            end_date = max_date_allowed
+            toexclude = []
+
+        fig, fig_diff, fig_comp = self.gen_graph_fig(df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff)
+
+        return fig, fig_diff, fig_comp, df.to_dict('records'), all_sd, min_date_allowed, max_date_allowed, start_date, end_date, [
+                html.Span("Min Date Allowed: "),
+                html.Span(min_date_allowed, className='fadedpurple_txt'),
+                html.Span(" | Max Date Allowed: "),
+                html.Span(max_date_allowed, className='fadedpurple_txt')
+                ], sd_bydd, [{'label': benchmarksinfo[k]['name'], 'value': benchmarksinfo[k]['ticker'], 'disabled': benchmarksinfo[k]['ticker'] in toexclude} for k in benchmarksinfo], len(df.columns)

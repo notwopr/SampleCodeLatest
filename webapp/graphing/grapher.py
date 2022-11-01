@@ -145,6 +145,7 @@ class GraphAssets:
                 'inputtype': 'table',
                 'id': f"graphdf_{bp.botid}"
                 }), id=f"hidden_{bp.botid}", hidden='hidden'),
+            html.Span(id=f"dfcol_{bp.botid}", hidden='hidden'),
             html.Br(),
             dcc.Tabs([
                 dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
