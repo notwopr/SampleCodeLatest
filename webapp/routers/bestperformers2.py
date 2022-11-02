@@ -16,7 +16,6 @@ maxdd
 """
 # IMPORT TOOLS
 #   STANDARD LIBRARY IMPORTS
-from itertools import permutations
 #   THIRD PARTY IMPORTS
 from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
@@ -32,16 +31,13 @@ from ..botclasses import BotParams
 from Modules.bots.bestperformers.BESTPERFORMERS_BASE2 import bestperformer_cruncher
 from ..os_functions import get_currentscript_filename
 from ..datatables import DataTableOperations
-from webapp.servernotes import getbenchdates
-from globalvars import benchmarks
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
 from formatting import format_htmltable_row, format_tabs
-from .pricehistoryexplorer_helper_graphcomp import PriceExplorerHelperFunctions
 from .bestperformers2_helper_inputs import BestPerformerInputs
 from ..graphing.grapher import GraphAssets
-
-benchmarkdata = getbenchdates(benchmarks)
+from ..graphing.grapher_helper_functions import GrapherHelperFunctions
+from ..graphing.grapher_helper_volstats import VolStatFunctions
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -52,7 +48,7 @@ bp = BotParams(
 
 tbodydata = [
     {
-        'id': f'datepicker_{bp.botid}',
+        'id': f'datepicker_bptable_{bp.botid}',
         'prompt': 'Specify a date range.',
         'inputtype': 'datepicker_range',
         'clearable': True,
@@ -74,40 +70,6 @@ drop_mag_inputs = BestPerformerInputs(bp, tickers).drop_mag_inputs
 drop_prev_inputs = BestPerformerInputs(bp, tickers).drop_prev_inputs
 dropscore_inputs = BestPerformerInputs(bp, tickers).dropscore_inputs
 maxdd_inputs = BestPerformerInputs(bp, tickers).maxdd_inputs
-# perf_graph_inputs = BestPerformerInputs(bp, tickers).perf_graph_inputs
-# pdiffsettings = BestPerformerInputs(bp, tickers).pdiffsettings
-# compsettings = BestPerformerInputs(bp, tickers).compsettings
-
-
-# perfgraphtab = html.Div([
-#     html.Table(gen_tablecontents(perf_graph_inputs)),
-#     html.Div(dash_inputbuilder({
-#         'inputtype': 'table',
-#         'id': f"sourcetable_{bp.botid}"
-#         }), id=f"hidden_{bp.botid}", hidden='hidden'),
-#     html.Br(),
-#     dcc.Tabs([
-#         dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
-#         dcc.Tab(html.Div([
-#             html.Table(gen_tablecontents(pdiffsettings)),
-#             dcc.Graph(id=f"graphdiff_{bp.botid}")
-#             ], className=format_tabs), label='Periodic Change'),
-#         dcc.Tab(html.Div([
-#             html.Table(gen_tablecontents(compsettings)),
-#             dcc.Graph(id=f"graphcomp_{bp.botid}")
-#             ], className=format_tabs), label='Comparative'),
-#         dcc.Tab(label='Volatility Metrics', children=[
-#             html.Div(dash_inputbuilder({
-#                 'inputtype': 'table',
-#                 'id': f"voltable_{bp.botid}"
-#                 }), className=format_tabs)
-#         ]),
-#         dcc.Tab(label='Raw Data', children=[
-#             html.Div(dash_inputbuilder({
-#                 'inputtype': 'table',
-#                 'id': f"rawdata_{bp.botid}"
-#                 }), className=format_tabs)])
-#     ])])
 
 layout = html.Div([
     html.Div([
@@ -155,8 +117,8 @@ layout = html.Div([
 
 # get random dates
 @app.callback(
-    Output(f'datepicker_{bp.botid}', "start_date"),
-    Output(f'datepicker_{bp.botid}', "end_date"),
+    Output(f'datepicker_bptable_{bp.botid}', "start_date"),
+    Output(f'datepicker_bptable_{bp.botid}', "end_date"),
     Input(f'randomize_{bp.botid}', "n_clicks"),
     prevent_initial_call=True
     )
@@ -414,8 +376,8 @@ def update_inputs_maxdd(thresh):
 # VALIDATE INPUTS
 @app.callback(
     Output(f'tab_preview_{bp.botid}', "children"),
-    Input(f"datepicker_{bp.botid}", 'start_date'),
-    Input(f"datepicker_{bp.botid}", 'end_date'),
+    Input(f"datepicker_bptable_{bp.botid}", 'start_date'),
+    Input(f"datepicker_bptable_{bp.botid}", 'end_date'),
     Input(f"growthrate_{bp.botid}", 'value'),
     Input(f"byticker_growthrate_{bp.botid}", 'value'),
     Input(f"bynumber_growthrate_{bp.botid}", 'value'),
@@ -538,8 +500,8 @@ def validate_inputs(
 @app.callback(
     Output(f'bptable_{bp.botid}', 'data'),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
-    State(f"datepicker_{bp.botid}", 'start_date'),
-    State(f"datepicker_{bp.botid}", 'end_date'),
+    State(f"datepicker_bptable_{bp.botid}", 'start_date'),
+    State(f"datepicker_bptable_{bp.botid}", 'end_date'),
     State(f"growthrate_{bp.botid}", 'value'),
     State(f"byticker_growthrate_{bp.botid}", 'value'),
     State(f"bynumber_growthrate_{bp.botid}", 'value'),
@@ -709,39 +671,7 @@ def gen_perf_graph_tickerlist(dfdata):
     Input(f"portcurve_{bp.botid}", "value")
     )
 def show_portcurve_option(ticker, calib, portcurvevalue):
-    if ticker:
-        return PriceExplorerHelperFunctions().show_portcurve_option(ticker, calib, portcurvevalue)
-    else:
-        return [], []
-
-
-# gen performance graphs
-@app.callback(
-    Output(f"perf_graph_{bp.botid}", "figure"),
-    Output(f"graphdiff_{bp.botid}", "figure"),
-    Output(f"graphcomp_{bp.botid}", "figure"),
-    Output(f"sourcetable_{bp.botid}", "data"),
-    Input(f"perf_graph_ticker_{bp.botid}", "value"),
-    # Input(f"datepicker_{bp.botid}", 'start_date'),
-    # Input(f"datepicker_{bp.botid}", 'end_date'),
-    Input(f"calib_{bp.botid}", "value"),
-    Input(f"contour_{bp.botid}", "value"),
-    Input(f"graphcompoptions_{bp.botid}", "value"),
-    Input(f"graphdiff_mode_{bp.botid}", "value"),
-    Input(f"graphdiff_changecol_{bp.botid}", "value"),
-    Input(f"graphdiff_period_{bp.botid}", "value"),
-    Input(f"portcurve_{bp.botid}", "value"),
-    Input(f"bench_{bp.botid}", 'value'),
-    Input(f"hovermode_{bp.botid}", 'value')
-    )
-def gen_graph(ticker, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode):
-    if ticker:
-        df, compgraphcols, diffgraphcols, new_sd, all_sd = PriceExplorerHelperFunctions().gen_graph_df(ticker, calib, None, None, contour, graphcomp, gdm, gdc, gdp, portcurve, bench, hovermode)
-    else:
-        df = pd.DataFrame(data={'date': pd.date_range(benchmarkdata['dow']["earliestdate"], benchmarkdata['dow']["latestdate"]), '$': 0})
-        compgraphcols, diffgraphcols, ticker = '$', '$', '$'
-    fig, fig_diff, fig_comp = PriceExplorerHelperFunctions().gen_graph_fig(df, ticker, diffgraphcols, compgraphcols, hovermode)
-    return fig, fig_diff, fig_comp, df.to_dict('records')
+    return GrapherHelperFunctions().show_portcurve_option(ticker, calib, portcurvevalue)
 
 
 # create options for diffgraph and comp graph
@@ -752,32 +682,89 @@ def gen_graph(ticker, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, bench
     Output(f"graphdiff_changecol_{bp.botid}", "value"),
     Input(f"contour_{bp.botid}", "value")
     )
-def show_diffgraph_options(contour):
-    return PriceExplorerHelperFunctions().show_diffgraph_options(contour)
+def show_diffcomp_options(contour):
+    return GrapherHelperFunctions().show_diffcomp_options(contour)
+
+
+# gen performance graphs
+@app.callback(
+    Output(f"perf_graph_{bp.botid}", "figure"),
+    Output(f"graphdiff_{bp.botid}", "figure"),
+    Output(f"graphcomp_{bp.botid}", "figure"),
+    Output(f"graphdf_{bp.botid}", "data"),
+    Output(f"sd_bydd_{bp.botid}", "options"),
+    Output(f'datepicker_{bp.botid}', "min_date_allowed"),
+    Output(f'datepicker_{bp.botid}', "max_date_allowed"),
+    Output(f'datepicker_{bp.botid}', "start_date"),
+    Output(f'datepicker_{bp.botid}', "end_date"),
+    Output(f'minmaxinfo_datepicker_{bp.botid}', "children"),
+    Output(f"sd_bydd_{bp.botid}", "value"),
+    Output(f'bench_{bp.botid}', "options"),
+    Output(f"dfcol_{bp.botid}", "children"),
+    Input(f"perf_graph_ticker_{bp.botid}", "value"),
+    Input(f"datepicker_bptable_{bp.botid}", 'start_date'),
+    Input(f"datepicker_bptable_{bp.botid}", 'end_date'),
+    Input(f"calib_{bp.botid}", "value"),
+    Input(f"sd_bydd_{bp.botid}", "value"),
+    Input(f'datepicker_{bp.botid}', "start_date"),
+    Input(f'datepicker_{bp.botid}', "end_date"),
+    Input(f"contour_{bp.botid}", "value"),
+    Input(f"graphcompoptions_{bp.botid}", "value"),
+    Input(f"graphdiff_mode_{bp.botid}", "value"),
+    Input(f"graphdiff_changecol_{bp.botid}", "value"),
+    Input(f"graphdiff_period_{bp.botid}", "value"),
+    Input(f"portcurve_{bp.botid}", "value"),
+    Input(f"bench_{bp.botid}", 'value'),
+    Input(f"hovermode_{bp.botid}", 'value'),
+    Input(f"dfcol_{bp.botid}", "children")
+    )
+def gen_graph(tickers, bp_startdate, bp_enddate, calib, sd_bydd, pick_start, pick_end, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode, dfcol):
+    if tickers:
+        min_date_allowed = bp_startdate
+        max_date_allowed = bp_enddate
+    else:
+        min_date_allowed = staticmindate
+        max_date_allowed = staticmaxdate
+    return GrapherHelperFunctions().gen_graph_output(callback_context, tickers, min_date_allowed, max_date_allowed, sd_bydd, pick_start, pick_end, calib, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode, dfcol)
 
 
 # sort raw data table
-# sourcetable is a hidden html DIV where orig filterdf is stored to be used by voldf and rawdatatable tab
 @app.callback(
     Output(f"rawdata_{bp.botid}", "data"),
     Input(f"rawdata_{bp.botid}", 'sort_by'),
     Input(f"rawdata_{bp.botid}", "data"),
-    Input(f"sourcetable_{bp.botid}", "data")
+    Input(f"graphdf_{bp.botid}", "data")
     )
 def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
-    return PriceExplorerHelperFunctions().sort_rawdatatable(sort_by, rawdatatable, sourcetable)
+    return DataTableOperations().return_sortedtable(sort_by, callback_context, rawdatatable, sourcetable).to_dict('records')
 
 
 # get volstats
 @app.callback(
-    Output(f"voltable_{bp.botid}", "data"),
+    Output(f"voltablesource_{bp.botid}", "data"),
     Output(f"voltable_{bp.botid}", "tooltip_header"),
-    Input(f"perf_graph_ticker_{bp.botid}", "value"),
-    Input(f"portcurve_{bp.botid}", "value"),
-    Input(f"bench_{bp.botid}", 'value'),
+    Input(f'voltbutton_{bp.botid}', "n_clicks"),
+    State(f"perf_graph_ticker_{bp.botid}", "value"),
+    State(f"portcurve_{bp.botid}", "value"),
+    State(f"bench_{bp.botid}", 'value'),
+    State(f"voltable_{bp.botid}", 'sort_by'),
+    State(f"voltable_{bp.botid}", "data"),
+    State(f"graphdf_{bp.botid}", "data"),
+    prevent_initial_call=True,
+    )
+def gen_volstats(n_clicks, ticker, portcurve, bench, sort_by, voldata, graphdfdata):
+    if ticker:
+        return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, graphdfdata)
+    else:
+        return pd.DataFrame(data=['No data.']).to_dict('records'), None
+
+
+# sort volatility table
+@app.callback(
+    Output(f"voltable_{bp.botid}", "data"),
     Input(f"voltable_{bp.botid}", 'sort_by'),
     Input(f"voltable_{bp.botid}", "data"),
-    Input(f"sourcetable_{bp.botid}", "data")
+    Input(f"voltablesource_{bp.botid}", "data")
     )
-def gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable):
-    return PriceExplorerHelperFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, sourcetable)
+def sort_volatilitytable(sort_by, finaltable, sourcetable):
+    return DataTableOperations().return_sortedtable(sort_by, callback_context, finaltable, sourcetable).to_dict('records')

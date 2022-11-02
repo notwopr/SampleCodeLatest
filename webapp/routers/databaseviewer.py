@@ -221,7 +221,7 @@ def gen_cloudgraph(dfsource, hovermode, dbchoice, calibmode):
             yaxes = df.columns[1:]
             legendtitle = 'Tickers'
             fig = px.line(df, x=xaxis, y=yaxes, markers=False)
-            fig.update_traces(connectgaps=True)
+            # fig.update_traces(connectgaps=True)
             modeoptions = None
     else:
         yaxislabel = '%'

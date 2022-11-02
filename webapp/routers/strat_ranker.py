@@ -31,7 +31,7 @@ from Modules.numbers_formulas import func_ending_principal
 
 bp = BotParams(
     get_currentscript_filename(__file__),
-    'Strategy Ranker',
+    html.Del('Strategy Ranker (Deprecated)'),
     "Get metricvalue range of each quality metric then rank them across all strat test runs.",
     None
 )

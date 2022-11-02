@@ -55,6 +55,7 @@ tbodydata = [
 layout = html.Div([
     html.Div([
         html.Table(gen_tablecontents(tbodydata)),
+        html.Span(id=f'featurestatus_{bp.botid}', className='text-warning'),
         html.Div(id=f'updatestatus_{bp.botid}')
     ], id=f'input_{bp.botid}'),
     dcc.Tabs([
@@ -72,13 +73,14 @@ layout = html.Div([
 # update stock data
 @app.callback(
     Output(f'updatebutton_{bp.botid}', 'disabled'),
+    Output(f'featurestatus_{bp.botid}', 'children'),
     Input(f'updatebutton_{bp.botid}', 'n_clicks'),
     )
-def update_stockdata(n_clicks):
+def update_button(n_clicks):
     if _machine.machinename == 'awsbeanstalk':
-        return True
+        return True, 'Feature disabled.'
     else:
-        return False
+        return False, None
 
 
 # update stock data
