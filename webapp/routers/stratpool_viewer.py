@@ -30,6 +30,7 @@ from newbacktest.baking.baker_stratpool import Baker
 from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
 from ..graphing.grapher_helper_volstats import VolStatFunctions
+from machinesettings import _machine
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -37,6 +38,7 @@ bp = BotParams(
     "Given a stock screening strategy and date, returns the resulting stratpool. A stratpool consists of a resulting dataframe of stocks after a given strategy has been applied to the existing stocks as of the date given.  If the strategy is a sorter, then it'll be a ranking.  If the strategy is a filter, it would simply be a list of stocks that satisfied the strategy's filter criteria.",
     None
 )
+
 
 tbodydata = [
     {
@@ -63,9 +65,19 @@ tbodydata = [
         'prompt': 'Randomize date instead?',
         'buttontext': 'Randomize date',
         'inputtype': 'button_submit'
+        },
+    {
+        'id': f'stratpooldate_{bp.botid}',
+        'prompt': 'Pick a date.',
+        'inputtype': 'dropdown',
+        'placeholder': 'Choose a key to explore',
+        'options': [],
+        'value': "",
+        'multi': False,
+        'searchable': False,
+        'clearable': False
         }
 ]
-
 
 layout = html.Div([
     html.Div([
@@ -92,30 +104,60 @@ layout = html.Div([
 ])
 
 
-# get random date
+# get possible dates
+@app.callback(
+    Output(f'stratpooldate_{bp.botid}', "options"),
+    Input(f'strat_{bp.botid}', "value"),
+    )
+def gen_dates(strat):
+    if strat:
+        return [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'][strat].keys()]
+    else:
+        return []
+
+
+# binary date fields
 @app.callback(
     Output(f'datepicker_single_{bp.botid}', "date"),
+    Output(f'stratpooldate_{bp.botid}', "value"),
+    Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f'stratpooldate_{bp.botid}', "value"),
     Input(f'randomize_{bp.botid}', "n_clicks"),
-    prevent_initial_call=True
     )
-def randomize_date(n_clicks):
-    return random_dates(staticmindate, staticmaxdate, 1)[0]
+def switch_dates(datepicker, dropdowndate, n_clicks):
+    if callback_context.triggered[0]['prop_id'].startswith('stratpooldate'):
+        return None, dropdowndate
+    elif callback_context.triggered[0]['prop_id'].startswith('datepicker_single'):
+        return datepicker, ""
+    elif callback_context.triggered[0]['prop_id'].startswith('randomize'):
+        return random_dates(staticmindate, staticmaxdate, 1)[0], ""
+    else:
+        return datepicker, dropdowndate
 
 
 # get input summary
 @app.callback(
     Output(f'preview_{bp.botid}', "children"),
     Output(f'strat_{bp.botid}', "options"),
+    Output(f'datepicker_single_{bp.botid}', "disabled"),
+    Output(f'randomize_{bp.botid}', "disabled"),
     Input(f'strat_{bp.botid}', "value"),
-    Input(f'datepicker_single_{bp.botid}', "date")
+    Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f'stratpooldate_{bp.botid}', "value"),
     )
-def preview_inputs(strat, date):
+def preview_inputs(strat, datepicker, dropdowndate):
+    if _machine.machinename == 'awsbeanstalk':
+        datepickerdisabled = True
+        randomizerdisabled = True
+    else:
+        datepickerdisabled = False
+        randomizerdisabled = False
     setting_summary = [
         f'strategy: {strat}',
-        f'date: {date}'
+        f'date: {dropdowndate if dropdowndate != "" else datepicker if not None else None}'
         ]
     setting_summary = [html.P([html.Div([html.Span(i), html.Br()]) for i in setting_summary])]
-    return setting_summary, [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()]
+    return setting_summary, [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()], datepickerdisabled, randomizerdisabled
 
 
 # gen fullranking sourcetable
@@ -124,9 +166,11 @@ def preview_inputs(strat, date):
     Output(f"stratpoolsourcetable_{bp.botid}", "data"),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
     State(f'strat_{bp.botid}', "value"),
-    State(f'datepicker_single_{bp.botid}', "date")
+    State(f'datepicker_single_{bp.botid}', "date"),
+    State(f'stratpooldate_{bp.botid}', "value")
     )
-def run_stratreporter(n_clicks, stratcode, invest_startdate):
+def run_stratreporter(n_clicks, stratcode, datepicker, dropdowndate):
+    invest_startdate = dropdowndate if dropdowndate != "" else datepicker if not None else None
     if all(i is not None for i in [stratcode, invest_startdate]):
         check = StratPoolDatabase().view_stratpool(stratcode, invest_startdate)
         if check:
