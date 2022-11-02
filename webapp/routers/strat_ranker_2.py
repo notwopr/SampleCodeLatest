@@ -170,9 +170,9 @@ layout = html.Div([
 @app.callback(
     Output(f'updatesamps_{bp.botid}', 'disabled'),
     Output(f'featurestatus_{bp.botid}', 'children'),
-    Input(f'submitbutton_{bp.botid}', 'n_clicks'),
+    Input(f'updatesamps_{bp.botid}', 'n_clicks'),
     )
-def update_stockdata(n_clicks):
+def update_updatesampbutton(n_clicks):
     if _machine.machinename == 'awsbeanstalk':
         return True, 'Feature disabled.'
     else:
