@@ -33,6 +33,7 @@ from file_functions import readpkl, join_str
 from formatting import helpful_note_value, helpful_note_key
 from webapp.routers.strat_ranker_2_helper_grapher import StratRankerGrapher
 from webapp.routers.strat_ranker_2_helper_stakefigures import StakeFigures
+from machinesettings import _machine
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -58,6 +59,7 @@ layout = html.Div([
             'buttontext': 'Update Samples',
             'inputtype': 'button_submit'
             }),
+        html.Span(id=f'featurestatus_{bp.botid}', className='text-warning'),
         html.Br(),
         html.P([html.Small('Samples last updated: ', className=helpful_note_key), html.Small(id=f'lastupdate_{bp.botid}', className=helpful_note_value)]),
         html.Br()
@@ -164,16 +166,29 @@ layout = html.Div([
 ])
 
 
+# update stock data
+@app.callback(
+    Output(f'updatesamps_{bp.botid}', 'disabled'),
+    Output(f'featurestatus_{bp.botid}', 'children'),
+    Input(f'submitbutton_{bp.botid}', 'n_clicks'),
+    )
+def update_stockdata(n_clicks):
+    if _machine.machinename == 'awsbeanstalk':
+        return True, 'Feature disabled.'
+    else:
+        return False, None
+
+
 # gen sample source
 @app.callback(
     Output(f'sampleschartsource_{bp.botid}', 'data'),
     Output(f'lastupdate_{bp.botid}', 'children'),
     Output(f"hidestrat_{bp.botid}", 'options'),
     Output(f"hidestrat_{bp.botid}", 'value'),
-    Input(f"startcapital_{bp.botid}", 'value'),
+    # Input(f"startcapital_{bp.botid}", 'value'),
     Input(f"updatesamps_{bp.botid}", 'n_clicks')
     )
-def get_samplesource(stake, updatesamps):
+def get_samplesource(updatesamps):
     if updatesamps or not os.path.exists(sampdfpath):
         perfmetricdf = PerfProfileUpdater().get_samplesdf()
     else:
