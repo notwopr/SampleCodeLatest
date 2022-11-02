@@ -246,6 +246,7 @@ def show_diffcomp_options(contour):
     Output(f"dfcol_{bp.botid}", "children"),
     Input(f"perf_graph_ticker_{bp.botid}", "value"),
     Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f'stratpooldate_{bp.botid}', "value"),
     Input(f"calib_{bp.botid}", "value"),
     Input(f"sd_bydd_{bp.botid}", "value"),
     Input(f'datepicker_{bp.botid}', "start_date"),
@@ -260,11 +261,11 @@ def show_diffcomp_options(contour):
     Input(f"hovermode_{bp.botid}", 'value'),
     Input(f"dfcol_{bp.botid}", "children"),
     )
-def gen_graph(tickers, invest_startdate, calib, sd_bydd, pick_start, pick_end, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode, dfcol):
+def gen_graph(tickers, invest_startdate, dropdowndate, calib, sd_bydd, pick_start, pick_end, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks, hovermode, dfcol):
     if tickers:
         minmaxdates = get_minmaxdates(tickers)
         min_date_allowed = minmaxdates[0]
-        max_date_allowed = str(min([dt.date.fromisoformat(minmaxdates[1]), dt.date.fromisoformat(invest_startdate)]))
+        max_date_allowed = str(min([dt.date.fromisoformat(minmaxdates[1]), dt.date.fromisoformat(dropdowndate if dropdowndate != "" else invest_startdate)]))
     else:
         min_date_allowed = staticmindate
         max_date_allowed = staticmaxdate
