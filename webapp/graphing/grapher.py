@@ -170,7 +170,11 @@ class GraphAssets:
                             'inputtype': 'table',
                             'id': f"voltable_{bp.botid}"
                             })
-                        ], className=format_tabs)
+                        ], className=format_tabs),
+                    html.Div(dash_inputbuilder({
+                        'inputtype': 'table',
+                        'id': f"voltablesource_{bp.botid}"
+                        }), hidden='hidden')
                 ]),
                 dcc.Tab(label='Raw Data', children=[
                     html.Div(dash_inputbuilder({

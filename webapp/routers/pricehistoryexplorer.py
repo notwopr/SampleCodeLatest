@@ -119,7 +119,7 @@ def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
 
 # get volstats
 @app.callback(
-    Output(f"voltable_{bp.botid}", "data"),
+    Output(f"voltablesource_{bp.botid}", "data"),
     Output(f"voltable_{bp.botid}", "tooltip_header"),
     Input(f'voltbutton_{bp.botid}', "n_clicks"),
     State(f"perf_graph_ticker_{bp.botid}", "value"),
@@ -135,3 +135,14 @@ def gen_volstats(n_clicks, ticker, portcurve, bench, sort_by, voldata, graphdfda
         return VolStatFunctions().gen_volstats(ticker, portcurve, bench, sort_by, voldata, graphdfdata)
     else:
         return pd.DataFrame(data=['No data.']).to_dict('records'), None
+
+
+# sort volatility table
+@app.callback(
+    Output(f"voltable_{bp.botid}", "data"),
+    Input(f"voltable_{bp.botid}", 'sort_by'),
+    Input(f"voltable_{bp.botid}", "data"),
+    Input(f"voltablesource_{bp.botid}", "data")
+    )
+def sort_volatilitytable(sort_by, finaltable, sourcetable):
+    return DataTableOperations().return_sortedtable(sort_by, callback_context, finaltable, sourcetable).to_dict('records')
