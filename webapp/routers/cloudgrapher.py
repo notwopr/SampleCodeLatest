@@ -112,10 +112,12 @@ layout = html.Div([
                 'inputtype': 'table',
                 'id': f"codechart_{bp.botid}"
                 }), className=format_tabs), label='Curve Glossary'),
-        dcc.Tab(html.Div(dash_inputbuilder({
+        dcc.Tab(html.Div([
+            html.P("(Generates only when 'Group by Stratipcode is checkmarked')", id=f"sipchartinfo_{bp.botid}"),
+            dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"sipchart_{bp.botid}"
-                }), className=format_tabs), label='Stratipcode Glossary'),
+                })], className=format_tabs), label='Stratipcode Glossary'),
         dcc.Tab(html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"cloudchart_{bp.botid}"
@@ -142,6 +144,7 @@ def update_inputs_growthrate(misc):
     Output(f'cloudchartsource_{bp.botid}', 'data'),
     Output(f'codechart_{bp.botid}', 'data'),
     Output(f'sipchart_{bp.botid}', 'data'),
+    Output(f'sipchartinfo_{bp.botid}', 'hidden'),
     Input(f"startcapital_{bp.botid}", 'value'),
     Input(f"addbenchmark_{bp.botid}", 'value'),
     Input(f"misc_{bp.botid}", 'value'),
@@ -149,7 +152,7 @@ def update_inputs_growthrate(misc):
     Input(f"groupby_{bp.botid}", 'value'),
     )
 def get_cloudchart(stake, benchmarks, misc, aggmode, groupby):
-
+    sipchartinfo = None
     # gather all cloudsampcodes
     allcloudsampcodes = list(CloudSampleDatabase().view_database().keys())
 
@@ -175,6 +178,7 @@ def get_cloudchart(stake, benchmarks, misc, aggmode, groupby):
     '''aggregate by stratipcode if requested'''
     sipchartdata = []
     if 'sic' in misc:
+        sipchartinfo = 'hidden'
         for i, stratipcode in enumerate(sic_id.keys()):
             sicprefix = f'sic{i}'
             sipchartdata.append({'sic_id': sicprefix, 'csc_ids': f"{sic_id[stratipcode]}", 'stratipcode': stratipcode})
@@ -183,9 +187,10 @@ def get_cloudchart(stake, benchmarks, misc, aggmode, groupby):
             '''aggregate benchcurves'''
             for b in benchmarks:
                 aggregate_sipcols(aggmode, groupby, mdf, idcodesuffix, sicprefix, sic_id, b, stratipcode)
+
     '''generate codechart'''
     codedf = pd.DataFrame(data=[{'csc_id': v, 'sampcode': k, 'stratipcode': CloudSampCode().decode(k)['stratipcode']} for k, v in csc_id.items()])
-    return mdf.to_dict('records'), codedf.to_dict('records'), pd.DataFrame(data=sipchartdata).to_dict('records')
+    return mdf.to_dict('records'), codedf.to_dict('records'), pd.DataFrame(data=sipchartdata).to_dict('records'), sipchartinfo
 
 
 # gen and sort cloudchart
