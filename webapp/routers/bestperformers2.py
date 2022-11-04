@@ -111,7 +111,11 @@ layout = html.Div([
             'inputtype': 'table',
             'id': f"sourcetable_{bp.botid}"
             }), className=format_tabs), label='Raw Data')
-        ])
+        ]),
+    html.Div(dash_inputbuilder({
+        'inputtype': 'table',
+        'id': f"bpsourcetable_{bp.botid}"
+        }), id=f"hidden_{bp.botid}", hidden='hidden'),
 ])
 
 
@@ -498,47 +502,45 @@ def validate_inputs(
 
 # CALC BEST PERFORMERS
 @app.callback(
-    Output(f'bptable_{bp.botid}', 'data'),
+    Output(f'bpsourcetable_{bp.botid}', 'data'),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
-    State(f"datepicker_bptable_{bp.botid}", 'start_date'),
-    State(f"datepicker_bptable_{bp.botid}", 'end_date'),
-    State(f"growthrate_{bp.botid}", 'value'),
-    State(f"byticker_growthrate_{bp.botid}", 'value'),
-    State(f"bynumber_growthrate_{bp.botid}", 'value'),
-    State(f"growthrate_filter_{bp.botid}", 'value'),
-    State(f"growthrate_margin_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtoraw_{bp.botid}", 'value'),
-    State(f"byticker_fatscore_baremaxtoraw_{bp.botid}", 'value'),
-    State(f"bynumber_fatscore_baremaxtoraw_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtoraw_filter_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtoraw_margin_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtobaremin_{bp.botid}", 'value'),
-    State(f"byticker_fatscore_baremaxtobaremin_{bp.botid}", 'value'),
-    State(f"bynumber_fatscore_baremaxtobaremin_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtobaremin_filter_{bp.botid}", 'value'),
-    State(f"fatscore_baremaxtobaremin_margin_{bp.botid}", 'value'),
-    State(f"drop_mag_{bp.botid}", 'value'),
-    State(f"byticker_drop_mag_{bp.botid}", 'value'),
-    State(f"bynumber_drop_mag_{bp.botid}", 'value'),
-    State(f"drop_mag_filter_{bp.botid}", 'value'),
-    State(f"drop_mag_margin_{bp.botid}", 'value'),
-    State(f"drop_prev_{bp.botid}", 'value'),
-    State(f"byticker_drop_prev_{bp.botid}", 'value'),
-    State(f"bynumber_drop_prev_{bp.botid}", 'value'),
-    State(f"drop_prev_filter_{bp.botid}", 'value'),
-    State(f"drop_prev_margin_{bp.botid}", 'value'),
-    State(f"dropscore_{bp.botid}", 'value'),
-    State(f"byticker_dropscore_{bp.botid}", 'value'),
-    State(f"bynumber_dropscore_{bp.botid}", 'value'),
-    State(f"dropscore_filter_{bp.botid}", 'value'),
-    State(f"dropscore_margin_{bp.botid}", 'value'),
-    State(f"maxdd_{bp.botid}", 'value'),
-    State(f"byticker_maxdd_{bp.botid}", 'value'),
-    State(f"bynumber_maxdd_{bp.botid}", 'value'),
-    State(f"maxdd_filter_{bp.botid}", 'value'),
-    State(f"maxdd_margin_{bp.botid}", 'value'),
-    Input(f"bptable_{bp.botid}", 'sort_by'),
-    Input(f"bptable_{bp.botid}", 'data'),
+    Input(f"datepicker_bptable_{bp.botid}", 'start_date'),
+    Input(f"datepicker_bptable_{bp.botid}", 'end_date'),
+    Input(f"growthrate_{bp.botid}", 'value'),
+    Input(f"byticker_growthrate_{bp.botid}", 'value'),
+    Input(f"bynumber_growthrate_{bp.botid}", 'value'),
+    Input(f"growthrate_filter_{bp.botid}", 'value'),
+    Input(f"growthrate_margin_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtoraw_{bp.botid}", 'value'),
+    Input(f"byticker_fatscore_baremaxtoraw_{bp.botid}", 'value'),
+    Input(f"bynumber_fatscore_baremaxtoraw_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtoraw_filter_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtoraw_margin_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtobaremin_{bp.botid}", 'value'),
+    Input(f"byticker_fatscore_baremaxtobaremin_{bp.botid}", 'value'),
+    Input(f"bynumber_fatscore_baremaxtobaremin_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtobaremin_filter_{bp.botid}", 'value'),
+    Input(f"fatscore_baremaxtobaremin_margin_{bp.botid}", 'value'),
+    Input(f"drop_mag_{bp.botid}", 'value'),
+    Input(f"byticker_drop_mag_{bp.botid}", 'value'),
+    Input(f"bynumber_drop_mag_{bp.botid}", 'value'),
+    Input(f"drop_mag_filter_{bp.botid}", 'value'),
+    Input(f"drop_mag_margin_{bp.botid}", 'value'),
+    Input(f"drop_prev_{bp.botid}", 'value'),
+    Input(f"byticker_drop_prev_{bp.botid}", 'value'),
+    Input(f"bynumber_drop_prev_{bp.botid}", 'value'),
+    Input(f"drop_prev_filter_{bp.botid}", 'value'),
+    Input(f"drop_prev_margin_{bp.botid}", 'value'),
+    Input(f"dropscore_{bp.botid}", 'value'),
+    Input(f"byticker_dropscore_{bp.botid}", 'value'),
+    Input(f"bynumber_dropscore_{bp.botid}", 'value'),
+    Input(f"dropscore_filter_{bp.botid}", 'value'),
+    Input(f"dropscore_margin_{bp.botid}", 'value'),
+    Input(f"maxdd_{bp.botid}", 'value'),
+    Input(f"byticker_maxdd_{bp.botid}", 'value'),
+    Input(f"bynumber_maxdd_{bp.botid}", 'value'),
+    Input(f"maxdd_filter_{bp.botid}", 'value'),
+    Input(f"maxdd_margin_{bp.botid}", 'value'),
     prevent_initial_call=True
     )
 def calc_bestperformers(
@@ -580,15 +582,8 @@ def calc_bestperformers(
         bynumber_maxdd,
         maxdd_filter,
         maxdd_margin,
-        sort_by,
-        dfdata
         ):
-    if dfdata and callback_context.triggered[0]['prop_id'].endswith('sort_by'):
-        # convert table back to dataframe
-        botdf = pd.DataFrame.from_records(dfdata)
-        botdf = DataTableOperations().sort_datatable(sort_by, botdf)
-    else:
-        # form bot run-specific parameters ('brp').
+    if callback_context.triggered[0]['prop_id'].startswith('submitbutton_'):
         brp = {**brpb_base(bp.botid, 1), **{
             'start_date': start_date,
             'end_date': end_date,
@@ -632,7 +627,23 @@ def calc_bestperformers(
         botdf = bp.botfunc(brp)
         # delete temp files and folder
         delete_folder(getbotsinglerunfolder(brp['rootdir'], brp['testregimename'], brp['todaysdate'], brp['testnumber']))
-    return botdf.to_dict('records')
+        return botdf.to_dict('records')
+    else:
+        return None
+
+
+# gen and sort fullranking
+@app.callback(
+    Output(f'bptable_{bp.botid}', 'data'),
+    Input(f"bptable_{bp.botid}", 'data'),
+    Input(f"bptable_{bp.botid}", 'sort_by'),
+    Input(f"bpsourcetable_{bp.botid}", "data"),
+    )
+def gen_sort_fullranking(displaytable, sort_by, sourcetable):
+    if sourcetable:
+        return DataTableOperations().return_sortedtable(sort_by, callback_context, displaytable, sourcetable).to_dict('records')
+    else:
+        return None
 
 
 # FULL RANK GRAPH
@@ -657,7 +668,7 @@ def gen_fullrankgraph(dfdata, hovermode):
 # generate tickerlist for performance graph
 @app.callback(
     Output(f'perf_graph_ticker_{bp.botid}', 'options'),
-    Input(f"bptable_{bp.botid}", 'data')
+    Input(f"bpsourcetable_{bp.botid}", 'data')
     )
 def gen_perf_graph_tickerlist(dfdata):
     return pd.DataFrame.from_records(dfdata)['stock'].tolist() if dfdata else []
