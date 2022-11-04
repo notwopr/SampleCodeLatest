@@ -56,7 +56,7 @@ tbodydata = [
         'prompt': 'Choose a current date.',
         'inputtype': 'datepicker_single',
         'clearable': True,
-        'date': staticmindate,
+        'date': None,
         'min_date_allowed': staticmindate,
         'max_date_allowed': staticmaxdate
         },
@@ -116,74 +116,101 @@ def gen_dates(strat):
         return []
 
 
-# binary date fields
-@app.callback(
-    Output(f'datepicker_single_{bp.botid}', "date"),
-    Output(f'stratpooldate_{bp.botid}', "value"),
-    Input(f'datepicker_single_{bp.botid}', "date"),
-    Input(f'stratpooldate_{bp.botid}', "value"),
-    Input(f'randomize_{bp.botid}', "n_clicks"),
-    )
-def switch_dates(datepicker, dropdowndate, n_clicks):
-    if callback_context.triggered[0]['prop_id'].startswith('stratpooldate'):
-        return None, dropdowndate
-    elif callback_context.triggered[0]['prop_id'].startswith('datepicker_single'):
-        return datepicker, ""
-    elif callback_context.triggered[0]['prop_id'].startswith('randomize'):
-        return random_dates(staticmindate, staticmaxdate, 1)[0], ""
-    else:
-        return datepicker, dropdowndate
-
-
-# get input summary
+# gen messaging
 @app.callback(
     Output(f'preview_{bp.botid}', "children"),
-    Output(f'strat_{bp.botid}', "options"),
-    Output(f'datepicker_single_{bp.botid}', "disabled"),
-    Output(f'randomize_{bp.botid}', "disabled"),
+    Output(f'output_{bp.botid}', "children"),
+    Input(f"stratpoolsourcetable_{bp.botid}", "data"),
     Input(f'strat_{bp.botid}', "value"),
     Input(f'datepicker_single_{bp.botid}', "date"),
     Input(f'stratpooldate_{bp.botid}', "value"),
+    Input(f'perf_graph_ticker_{bp.botid}', 'options'),
     )
-def preview_inputs(strat, datepicker, dropdowndate):
+def messenger(stratpool, stratcode, datepicker, dropdowndate, tickerlist):
+    invest_startdate = dropdowndate if dropdowndate != "" else datepicker if not None else None
+    if stratcode and invest_startdate and callback_context.triggered[0]['prop_id'].startswith('submitbutton_'):
+        message = 'Stratpool is being generated.'
+    elif stratpool and stratcode and invest_startdate and not callback_context.triggered[0]['prop_id'].startswith('submitbutton_'):
+        if tickerlist:
+            message = 'Stratpool generated.'
+        if not tickerlist:
+            message = 'Strategy run but all stocks were filtered out.'
+    elif stratcode and invest_startdate:
+        message = 'Ready to generate stratpool.'
+    else:
+        message = 'Test was not run.  Please provide both a strategy and a date.'
+
+    setting_summary = [
+        f'strategy: {stratcode}',
+        f'date: {invest_startdate}'
+        ]
+    setting_summary = html.P([
+        html.Span(f'strategy: {stratcode}'),
+        html.Br(),
+        html.Span(f'date: {invest_startdate}'),
+        html.Br(),
+        ])
+
+    return setting_summary, message
+
+
+# gen fullranking sourcetable
+@app.callback(
+    Output(f"stratpoolsourcetable_{bp.botid}", "data"),
+    Output(f'perf_graph_ticker_{bp.botid}', 'options'),
+    Output(f'perf_graph_ticker_{bp.botid}', 'value'),
+    Output(f'strat_{bp.botid}', "options"),
+    Output(f'stratpooldate_{bp.botid}', "value"),
+    Output(f'datepicker_single_{bp.botid}', "date"),
+    Output(f'datepicker_single_{bp.botid}', "disabled"),
+    Output(f'randomize_{bp.botid}', "disabled"),
+    Input(f'submitbutton_{bp.botid}', 'n_clicks'),
+    Input(f'strat_{bp.botid}', "value"),
+    Input(f'datepicker_single_{bp.botid}', "date"),
+    Input(f'randomize_{bp.botid}', "n_clicks"),
+    Input(f'stratpooldate_{bp.botid}', "value"),
+    )
+def run_stratreporter(submit, stratcode, datepicker, randomize, dropdowndate):
     if _machine.machinename == 'awsbeanstalk':
         datepickerdisabled = True
         randomizerdisabled = True
     else:
         datepickerdisabled = False
         randomizerdisabled = False
-    setting_summary = [
-        f'strategy: {strat}',
-        f'date: {dropdowndate if dropdowndate != "" else datepicker if not None else None}'
-        ]
-    setting_summary = [html.P([html.Div([html.Span(i), html.Br()]) for i in setting_summary])]
-    return setting_summary, [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()], datepickerdisabled, randomizerdisabled
 
+    if callback_context.triggered[0]['prop_id'].startswith('stratpooldate'):
+        datepicker = None
+        dropdowndate = dropdowndate
+    elif callback_context.triggered[0]['prop_id'].startswith('datepicker_single'):
+        datepicker = datepicker
+        dropdowndate = ""
+    elif callback_context.triggered[0]['prop_id'].startswith('randomize'):
+        datepicker = random_dates(staticmindate, staticmaxdate, 1)[0]
+        dropdowndate = ""
+    elif callback_context.triggered[0]['prop_id'].startswith('strat_'):
+        datepicker = None
+        dropdowndate = None
+    else:
+        datepicker = datepicker
+        dropdowndate = dropdowndate
 
-# gen fullranking sourcetable
-@app.callback(
-    Output(f'output_{bp.botid}', "children"),
-    Output(f"stratpoolsourcetable_{bp.botid}", "data"),
-    Input(f'submitbutton_{bp.botid}', 'n_clicks'),
-    State(f'strat_{bp.botid}', "value"),
-    State(f'datepicker_single_{bp.botid}', "date"),
-    State(f'stratpooldate_{bp.botid}', "value")
-    )
-def run_stratreporter(n_clicks, stratcode, datepicker, dropdowndate):
     invest_startdate = dropdowndate if dropdowndate != "" else datepicker if not None else None
-    if all(i is not None for i in [stratcode, invest_startdate]):
+    if stratcode and invest_startdate and callback_context.triggered[0]['prop_id'].startswith('submitbutton_'):
         check = StratPoolDatabase().view_stratpool(stratcode, invest_startdate)
         if check:
             stratpooldf = check.itemdata
         else:
             Baker()._bake_strategy(stratcode, invest_startdate)
             stratpooldf = StratPoolDatabase().view_stratpool(stratcode, invest_startdate).itemdata
+        tickerlist = stratpooldf['stock'].tolist()
         stratpool = stratpooldf.to_dict('records')
-        message = 'Stratpool generated.'
     else:
-        message = 'Test was not run.'
         stratpool = None
-    return message, stratpool
+        tickerlist = []
+
+    stratoptions = [{'label': k, 'value': k} for k in StratPoolDatabase().view_database()['data'].keys()]
+
+    return stratpool, tickerlist, None, stratoptions, dropdowndate, datepicker, datepickerdisabled, randomizerdisabled
 
 
 # gen and sort fullranking
@@ -194,16 +221,10 @@ def run_stratreporter(n_clicks, stratcode, datepicker, dropdowndate):
     Input(f"stratpoolsourcetable_{bp.botid}", "data"),
     )
 def gen_sort_fullranking(displaytable, sort_by, sourcetable):
-    return DataTableOperations().return_sortedtable(sort_by, callback_context, displaytable, sourcetable).to_dict('records')
-
-
-# generate tickerlist for performance graph
-@app.callback(
-    Output(f'perf_graph_ticker_{bp.botid}', 'options'),
-    Input(f"stratpoolsourcetable_{bp.botid}", "data")
-    )
-def gen_perf_graph_tickerlist(dfdata):
-    return pd.DataFrame.from_records(dfdata)['stock'].tolist() if dfdata else []
+    if sourcetable:
+        return DataTableOperations().return_sortedtable(sort_by, callback_context, displaytable, sourcetable).to_dict('records')
+    else:
+        return None
 
 
 @app.callback(
