@@ -50,9 +50,9 @@ def growthrate_period(sampcode):
 def growthrate_period_bestbench(sampcode):
     s = invest_startdate(sampcode)
     e = invest_enddate(sampcode)
-    ds = DataSource().opends('eodprices_bench')
-    ds.ffill(inplace=True)
-    benchdf = DataFrameOperations().filtered_double(ds, '>=<=', s, e, 'date').copy()
+    benchdf = DataSource().opends('eodprices_bench')
+    benchdf.ffill(inplace=True)
+    benchdf = DataFrameOperations().filtered_double(benchdf, '>=<=', s, e, 'date').copy()
     benchtickers = benchdf.columns[1:]
     if len(benchdf) == 0:
         return np.nan

@@ -15,6 +15,7 @@ from dash import html, callback_context
 from dash.dependencies import Input, Output, State
 from dashappobject import app
 import pandas as pd
+
 #   LOCAL APPLICATION IMPORTS
 from ..botclasses import BotParams
 from ..os_functions import get_currentscript_filename
@@ -38,9 +39,14 @@ layout = html.Div(GraphAssets(bp).perfgraphtab, id=f'input_{bp.botid}')
 @app.callback(
     Output(f"perf_graph_ticker_{bp.botid}", "options"),
     Input(f"bench_{bp.botid}", 'value'),
+    Input(f"dfcol_{bp.botid}", "children"),
     )
-def set_tickers(benchmarks):
-    return [t for t in alltickers if t not in benchmarks]
+def set_tickers(benchmarks, dfcol):
+    if dfcol is not None:
+        '''put this here becaues if u choose a ticker from the dropdown before the entire page loads (i.e. before gen_graph generates min max dates), gen_graph's dfcol value will be None and throw an Error. This way, you can't even choose a ticker until after dfcol is not None.'''
+        return [t for t in alltickers if t not in benchmarks]
+    else:
+        return []
 
 
 @app.callback(

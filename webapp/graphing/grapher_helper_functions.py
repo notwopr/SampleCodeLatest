@@ -75,8 +75,8 @@ class GrapherHelperFunctions:
     def gen_graph_df(self, tickers, calib, start_date, end_date, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks):
         yaxis = '$'
         portfolio = tickers.copy()
-        ds = DataSource().opends('eodprices_commonplusbench')
-        df = DataFrameOperations().filter_column(ds, ['date']+tickers).copy()
+        df = DataSource().opends('eodprices_commonplusbench')
+        df = DataFrameOperations().filter_column(df, ['date']+tickers).copy()
         df.ffill(inplace=True)
         df.dropna(inplace=True, how='all', subset=tickers)
         df = DataFrameOperations().filtered_double(df, '>=<=', start_date, end_date, 'date')
@@ -141,8 +141,7 @@ class GrapherHelperFunctions:
             elif sd_bydd and callback_context.triggered[0]['prop_id'].startswith('sd_bydd'):
                 start_date = sd_bydd
                 end_date = pick_end
-            # do not change graph window if graph already present (that's what dfcol is for)
-            elif any(nondatetriggers) and dfcol > 2:
+            elif any(nondatetriggers) and dfcol > 2:  # do not change graph window if graph already present (that's what dfcol is for)
                 start_date = pick_start
                 end_date = pick_end
             else:

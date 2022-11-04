@@ -111,10 +111,10 @@ def dropscore_single(uppercol, lowercol, seriesdata):
 # ratio of stock dropscore / bench dropscore
 def dropscoreratio_single(benchticker, uppercol, lowercol, invest_startdate, seriesdata):
     stockds = dropscore_single(uppercol, lowercol, seriesdata)
-    ds = DataSource().opends('eodprices_bench')
-    ds = DataFrameOperations().filter_bycolandrow_single(ds, '<=', invest_startdate, 'date', [benchticker])
-    benchseriesuntrimmed = ds[benchticker]
-    benchseriesdata = CurveType().transform(benchseriesuntrimmed, len(seriesdata)-1, 'raw', 'ffillandremove')
+    benchseriesdata = DataSource().opends('eodprices_bench')
+    benchseriesdata = DataFrameOperations().filter_bycolandrow_single(benchseriesdata, '<=', invest_startdate, 'date', [benchticker])
+    benchseriesdata = benchseriesdata[benchticker]
+    benchseriesdata = CurveType().transform(benchseriesdata, len(seriesdata)-1, 'raw', 'ffillandremove')
 
     benchds = dropscore_single(uppercol, lowercol, benchseriesdata)
     return 1 if benchds == 0 else stockds / benchds
