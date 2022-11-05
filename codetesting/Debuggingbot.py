@@ -16,13 +16,14 @@ import numpy as np
 
 def runtime_logger(num_runs, func_name, targetfunc, targetinputs):
     results = []
+
     for i in range(0, num_runs):
         start = time.time()
         '''INSERT FUNCTION TO TEST HERE'''
-        targetfunc(targetinputs)
+        other = targetfunc(*targetinputs)
         '''TESTFUNCTION END'''
         end = time.time()
         elapsed = end-start
         results.append(elapsed)
-        print(f'Run {i}: {elapsed} secs')
+        # print(f'Run {i}: {elapsed} secs')
     print(f'Ran {func_name} {num_runs} times. Average time per run is: {np.mean(results)} secs')

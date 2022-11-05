@@ -46,8 +46,7 @@ class DataFrameOperations:
 
     # joins multiple dataframes in a list together that share a column
     def join_matrices(self, sharedcolname, lofdfs):
-        # make list of all stockdfs to combine
-        resultlist = MultiProcessor().mp_mapasync_getresults(self.dfindexcolprep, lofdfs, 'no', (sharedcolname,))
+        resultlist = [self.dfindexcolprep(sharedcolname, d) for d in lofdfs]
         # join all stock dfs together
         mdf = pd.concat(resultlist, ignore_index=False, axis=1)
         # sort by shared col

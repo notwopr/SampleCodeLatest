@@ -7,7 +7,8 @@ import plotly.express as px
 import pandas as pd
 #   LOCAL APPLICATION IMPORTS
 from newbacktest.dataframe_operations import DataFrameOperations
-from newbacktest.datasource import DataSource
+# from newbacktest.datasource import DataSource
+from newbacktest.datasource_single import DataSourceSingle
 from newbacktest.curvecalibrator import CurveCalibrator
 from webapp.servernotes import get_ipodate
 from globalvars import benchmarks as benchmarksinfo
@@ -75,17 +76,14 @@ class GrapherHelperFunctions:
     def gen_graph_df(self, tickers, calib, start_date, end_date, contour, graphcomp, gdm, gdc, gdp, portcurve, benchmarks):
         yaxis = '$'
         portfolio = tickers.copy()
-        df = DataSource().opends('eodprices_commonplusbench')
-        df = DataFrameOperations().filter_column(df, ['date']+tickers).copy()
-        df.ffill(inplace=True)
-        df.dropna(inplace=True, how='all', subset=tickers)
+        # df = DataSource().eodprices_tickers_ffill(tickers)
+        df = DataSourceSingle().eodprices_multi_ffill(tickers)
         df = DataFrameOperations().filtered_double(df, '>=<=', start_date, end_date, 'date')
         df.reset_index(drop=True, inplace=True)
 
         if benchmarks:
-            bdf = DataSource().opends('eodprices_bench')
-            bdf.ffill(inplace=True)
-            bdf = DataFrameOperations().filter_column(bdf, ['date']+benchmarks)
+            # bdf = DataSource().eodprices_tickers_ffill(benchmarks)
+            bdf = DataSourceSingle().eodprices_multi_ffill(benchmarks)
             df = df.join(bdf.set_index('date'), how='left', on="date")
         tickers.extend(benchmarks)
 

@@ -25,6 +25,31 @@ from newbacktest.cloudgrapher.cloudsampgenerator import CloudSampleGenerator
 from newbacktest.symbology.cloudsampcode import CloudSampCode
 import datetime as dt
 import math
+from newbacktest.datasource_single import DataSourceSingle
+from newbacktest.datasource import DataSource
+from newbacktest.dataframe_operations import DataFrameOperations
+from newbacktest.tickerportal import TickerPortal
+import time
+from codetesting.Debuggingbot import runtime_logger
+
+# ticker = 'EBC'
+# tickers = ['^DJI', '^INX', '^IXIC']# ['AAPL', 'TSLA', 'SFIX', 'BYD']
+# df = DataSourceSingle().eodprices_single_no_ffill(ticker)
+# print(df)
+# exit()
+# print(DataSourceSingle()._add_filler_dates(df))
+# df = DataSourceSingle().eodprices_single_no_ffill(ticker)
+# df.ffill(inplace=True)
+# print(df)
+# print(DataSourceSingle().eodprices_single_ffill(ticker))
+if __name__ == '__main__':
+    sizes = [100]
+    # get random tickers
+    for n in sizes:
+        tlist = TickerPortal().random_tickers('common+bench', n)
+        print(DataSourceSingle().eodprices_multi_ffill(tlist))
+exit()
+# exit()
 # total = 20312.31
 # print(type(round(total)))
 # exit()

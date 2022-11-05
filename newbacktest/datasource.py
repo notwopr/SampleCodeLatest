@@ -23,11 +23,14 @@ class DataSource:
 
     def opends(self, datasourcetype):
         return readpkl_fullpath(Path(join_str(self._sourcelocs[datasourcetype])))
-        # if datasourcetype == 'eodprices' or datasourcetype == 'eodprices_bench':
-        #     return readpkl_fullpath(Path(join_str(self._sourcelocs[datasourcetype])))
-        # elif datasourcetype == 'eodprices_commonplusbench':
-        #     stockdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices'])))
-        #     benchdf = readpkl_fullpath(Path(join_str(self._sourcelocs['eodprices_bench'])))
-        #     fulldf = DataFrameOperations().join_matrices('date', [benchdf, stockdf])
-        #     savetopkl_fullpath(Path(join_str([DirPaths().eodprices, f"{FileNames().fn_pricematrix_commonplusbench}.pkl"])), fulldf)
-        #     return fulldf
+
+    def eodprices_tickers_noffill(self, tickers):
+        '''takes full pricematrix of all tickers including bench, and removes unwanted ticker columns. It keeps all dates however.  As a result, you may have rows that are just full of NaNs'''
+        return DataFrameOperations().filter_column(self.opends('eodprices_commonplusbench'), ['date']+tickers).copy()
+
+    def eodprices_tickers_ffill(self, tickers):
+        '''this not only filters out unwanted ticker columns, it forward fills nans and removes rows where none of the remaining tickers have data.'''
+        df = self.eodprices_tickers_noffill(tickers)
+        df.ffill(inplace=True)
+        df.dropna(inplace=True, how='all', subset=tickers)
+        return df

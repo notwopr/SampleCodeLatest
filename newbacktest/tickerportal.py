@@ -2,6 +2,7 @@
 #   STANDARD LIBRARY IMPORTS
 from pathlib import Path
 #   THIRD PARTY IMPORTS
+import numpy as np
 #   LOCAL APPLICATION IMPORTS
 from file_functions import readpkl_fullpath
 from file_hierarchy import DirPaths, FileNames
@@ -49,3 +50,9 @@ class TickerPortal:
         pool = pool if type(pool) == list else self.get_tickerlist(pool)
         valid_rows = self.tickers_possible(date, date)
         return valid_rows[valid_rows['stock'].isin(pool)]['stock'].tolist()
+
+    def random_tickers(self, mode, size):
+        fullpool = np.array(self.get_tickerlist(mode))
+        a = np.arange(len(fullpool))
+        b = np.sort(np.random.permutation(a)[:size])
+        return fullpool[b].tolist()

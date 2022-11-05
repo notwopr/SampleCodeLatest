@@ -27,8 +27,7 @@ class DateGenerator:
         # SHUFFLE THE INDEX LIST, RETURN THE FIRST N SAMPLES, SORT THE SAMPLE LIST
         b = np.sort(np.random.permutation(a)[:n])
         # RETRIEVE EACH DATE AND CHANGE TO ISOFORMAT
-        answer = [str(date)[:10] for date in dr[b]]
-        return answer
+        return [str(date)[:10] for date in dr[b]]
 
     # GET LATEST OR EARLIEST DATE AVAILABLE GIVEN DATE SOURCE
     def getfirstorlastdate(self, boundtype):
