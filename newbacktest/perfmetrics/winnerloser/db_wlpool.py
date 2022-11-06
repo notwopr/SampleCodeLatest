@@ -11,13 +11,16 @@ class WinLosePoolDatabase(AbstractKeyValDatabase):
     '''
     The Winner Loser Pool Database contains dataframes of winner and loser pools sorted by winloseprofile code and then by invest_startdate.
     structure = {
-        <sampcode>: {
-                invest_startdate: <wlpoolobj>,
-                invest_startdate: <wlpoolobj>,
-                ...
+        'properties': {},
+        'data': {
+            <sampcode>: {
+                    invest_startdate: <wlpoolobj>,
+                    invest_startdate: <wlpoolobj>,
+                    ...
 
-            }
-        ....
+                }
+            ....
+        }
     }
     '''
     _emptydb = {

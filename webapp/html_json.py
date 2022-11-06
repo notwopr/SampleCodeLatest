@@ -26,7 +26,10 @@ def jsontodash(data):
     return dash_renderjson.DashRenderjson(id="input", data=data, max_depth=-1, theme=theme, invert_theme=True)
 
 
-def remove_nonrenderables(dictdata):
+def remove_nonrenderables(dictdata, dbchoice):
     for k, v in dictdata.items():
         if k == '_creationdate':
             dictdata[k] = v.string
+        if k == '_itemdata':
+            if dbchoice == 'Stratpools' or dbchoice == 'Winner/Loser Pools':
+                dictdata[k] = '<DATAFRAME DATA HERE>'
