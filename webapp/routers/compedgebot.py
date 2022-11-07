@@ -22,6 +22,7 @@ from ..botclasses import BotParams
 from Modules.referencetools.businessmodel.businessmodelbot_base import comp_edge_needed, gen_fundprofiles, gen_fund_df, gen_edgeratedf
 from ..os_functions import get_currentscript_filename
 from formatting import format_tabs
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -180,7 +181,7 @@ layout = html.Div([
                 'value': 'x',
                 'inline': 'inline'
                 }),
-            dcc.Graph(id=f"graph_edgerate_{bp.botid}"),
+            dcc.Graph(id=f"graph_edgerate_{bp.botid}", config=dccgraph_config),
             html.Div([
                 html.Span(id=f"you_perf_slidelabel_{bp.botid}"),
                 dcc.Slider(-1, 1, step=0.01, marks=None, id=f"you_perf_{bp.botid}", tooltip={"placement": "bottom", "always_visible": True})
@@ -340,8 +341,8 @@ def update_edgerategraph(
             'comp_perf_fee_regime': comp_perf_fee_regime
         }
         graphdf = gen_edgeratedf(new_you_perf, 100, -1, 1, new_brp)
-        fig = px.line(graphdf, x=f'{comp_name} perfrate', y=['under/over_performing', f'{new_brp["your_name"]} perfrate needed', 'edgerate needed'], markers=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Edge Rate', hovermode=hovermode)
+        fig = px.line(graphdf, x=f'{comp_name} perfrate', y=['under/over_performing', f'{new_brp["your_name"]} perfrate needed', 'edgerate needed'], markers=False, template=figure_layout_mastertemplate)
+        fig.update_layout(legend_title_text='Edge Rate', hovermode=hovermode)
         return fig
     else:
         return dash.no_update

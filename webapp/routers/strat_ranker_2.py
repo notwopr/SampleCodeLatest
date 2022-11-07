@@ -34,6 +34,7 @@ from formatting import helpful_note_value, helpful_note_key
 from webapp.routers.strat_ranker_2_helper_grapher import StratRankerGrapher
 from webapp.routers.strat_ranker_2_helper_stakefigures import StakeFigures
 from machinesettings import _machine
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -122,10 +123,10 @@ layout = html.Div([
                             'value': 'Scatter',
                             'inline': 'inline'
                             }),
-                        dcc.Graph(id=f"rankmetricgraph_{bp.botid}")
+                        dcc.Graph(id=f"rankmetricgraph_{bp.botid}", config=dccgraph_config)
                         ], className=format_tabs), label='Distribution Graph'),
-                    dcc.Tab(html.Div(dcc.Graph(id=f"profilegraph_{bp.botid}"), className=format_tabs), label='Profile Graph'),
-                    dcc.Tab(html.Div(dcc.Graph(id=f"abovegraph_{bp.botid}"), className=format_tabs), label='Above Graph')
+                    dcc.Tab(html.Div(dcc.Graph(id=f"profilegraph_{bp.botid}", config=dccgraph_config), className=format_tabs), label='Profile Graph'),
+                    dcc.Tab(html.Div(dcc.Graph(id=f"abovegraph_{bp.botid}", config=dccgraph_config), className=format_tabs), label='Above Graph')
                 ])
             ], id=f'displayresult_{bp.botid}')], className=format_tabs), label='Visuals'),
         dcc.Tab(html.Div([
@@ -254,9 +255,9 @@ def gen_graph(stake, stakeperiod, hidestrat, chart_type, hovermode, sampleschart
     bdf = basedf[[c for c in basedf.columns if c not in ['invest_startdate', 'invest_enddate']]]
     bdf = bdf[bdf['stratipcode'].isin(hidestrat)]
     if len(bdf) == 0:
-        rank_fig = px.line(x=None, y=None)
-        prof_fig = px.line(x=None, y=None)
-        above_fig = px.line(x=None, y=None)
+        rank_fig = px.line(x=None, y=None, template=figure_layout_mastertemplate)
+        prof_fig = px.line(x=None, y=None, template=figure_layout_mastertemplate)
+        above_fig = px.line(x=None, y=None, template=figure_layout_mastertemplate)
         return rank_fig, prof_fig, above_fig
     else:
         if stake and stakeperiod:

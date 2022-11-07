@@ -28,6 +28,7 @@ from formatting import format_tabs
 from Modules.dataframe_functions import join_matrices
 from Modules.numbers import twodecp
 from Modules.numbers_formulas import func_ending_principal
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -115,7 +116,7 @@ layout = html.Div([
                         'min': 1,
                         'step': 1
                         })], id=f'stakeperiod_div_{bp.botid}'),
-                dcc.Graph(id=f"overallstats_{bp.botid}"),
+                dcc.Graph(id=f"overallstats_{bp.botid}", config=dccgraph_config),
                 html.B('Choose how you want to display labels when you hover over the graph.'),
                 dash_inputbuilder({
                     'id': f'hovermode_{bp.botid}',
@@ -174,7 +175,7 @@ def update_inputs_growthrate(stake):
 def gen_graph(stake, stakeperiod, hidestrat, chart_type, hovermode):
     bdf = basedf[basedf['strat_name'].isin(hidestrat)]
     if len(bdf) == 0:
-        fig = px.line(x=None, y=None)
+        fig = px.line(x=None, y=None, template=figure_layout_mastertemplate)
         return fig
     else:
         if stake and stakeperiod:
@@ -234,12 +235,12 @@ def gen_graph(stake, stakeperiod, hidestrat, chart_type, hovermode):
         df = pd.melt(bdf, id_vars="strat_name", value_vars=bdf.columns[1:], var_name='metric', value_name='value')
         df['section'] = df['metric'].apply(lambda x: 'rank metrics' if x != 'sample size' else 'sample size')
         if chart_type == 'Scatter':
-            fig = px.scatter(df, x="strat_name", y="value", color="metric", facet_row="section")
+            fig = px.scatter(df, x="strat_name", y="value", color="metric", facet_row="section", template=figure_layout_mastertemplate)
             fig.update_traces(marker=dict(size=12, opacity=0.5))
         elif chart_type == 'Box':
-            fig = px.box(df, x="strat_name", y="value", color="metric", facet_row="section", boxmode="overlay")
+            fig = px.box(df, x="strat_name", y="value", color="metric", facet_row="section", boxmode="overlay", template=figure_layout_mastertemplate)
         elif chart_type == 'Violin':
-            fig = px.violin(df, x="strat_name", y="value", color="metric", facet_row="section", violinmode="overlay")
+            fig = px.violin(df, x="strat_name", y="value", color="metric", facet_row="section", violinmode="overlay", template=figure_layout_mastertemplate)
         fig.update_yaxes(matches=None)
         #bdf = bdf.drop_duplicates(subset=['strat_name'])
         #fig.add_bar(x=bdf["strat_name"], y=bdf['sample size'], name="Sample Size", row=1, col=1)
@@ -248,7 +249,7 @@ def gen_graph(stake, stakeperiod, hidestrat, chart_type, hovermode):
             line_dash="solid",
             line_color="grey",
             line_width=2.5)
-        fig.update_layout(height=1000, transition_duration=500, legend_title_text='Legend', hovermode=hovermode, uirevision='some-constant')
+        fig.update_layout(height=1000, legend_title_text='Legend', hovermode=hovermode)
         return fig
 
 

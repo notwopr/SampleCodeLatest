@@ -12,6 +12,7 @@ from newbacktest.datasource_single import DataSourceSingle
 from newbacktest.curvecalibrator import CurveCalibrator
 from webapp.servernotes import get_ipodate
 from globalvars import benchmarks as benchmarksinfo
+from formatting_graphs import figure_layout_mastertemplate
 
 
 class GrapherHelperFunctions:
@@ -33,14 +34,14 @@ class GrapherHelperFunctions:
             return [{'label': f'{i[0]} to {i[1]}', 'value': f'{i[0]} {i[1]}'} for i in p], None, ['all', 'raw']+contour, 'all'
 
     def gen_graph_fig(self, df, pricegraphcols, diffgraphcols, compgraphcols, hovermode, yaxis, yaxis_diff):
-        fig = px.line(df, x='date', y=pricegraphcols, markers=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxis)
+        fig = px.line(df, x='date', y=pricegraphcols, markers=False, template=figure_layout_mastertemplate)
+        fig.update_layout(legend_title_text='Ticker', hovermode=hovermode, yaxis_title=yaxis)
         fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_diff = px.line(df, x='date', y=diffgraphcols, markers=False)
-        fig_diff.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxis_diff)
+        fig_diff = px.line(df, x='date', y=diffgraphcols, markers=False, template=figure_layout_mastertemplate)
+        fig_diff.update_layout(legend_title_text='Ticker', hovermode=hovermode, yaxis_title=yaxis_diff)
         fig_diff.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
-        fig_comp = px.line(df, x='date', y=compgraphcols, markers=False)
-        fig_comp.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant', yaxis_title='% (1=100%)')
+        fig_comp = px.line(df, x='date', y=compgraphcols, markers=False, template=figure_layout_mastertemplate)
+        fig_comp.update_layout(legend_title_text='Ticker', hovermode=hovermode, yaxis_title='% (1=100%)')
         fig_comp.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
         return fig, fig_diff, fig_comp
 

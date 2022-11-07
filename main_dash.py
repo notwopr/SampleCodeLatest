@@ -143,7 +143,10 @@ def successful(login_clicks, pw, logout_clicks, main_clicks):
               Input('url', 'pathname'))
 def gen_top_content(pathname):
     if pathname[1:] in bpdict.keys():
-        header = bpdict[pathname[1:]].botname
+        if pathname[1:] == 'strat_ranker' or pathname[1:] == 'strattester':
+            header = f"{bpdict[pathname[1:]].botid} [DEPRECATED]"
+        else:
+            header = bpdict[pathname[1:]].botname
         intro = bpdict[pathname[1:]].botdesc
     elif pathname == '/':
         header = 'welcome'

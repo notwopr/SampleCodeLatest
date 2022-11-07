@@ -27,7 +27,7 @@ from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
 from ..datatables import DataTableOperations
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
-
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -86,7 +86,7 @@ layout = html.Div([
     html.Div(id=f'readystatus_{bp.botid}'),
     html.Br(),
     html.Strong(html.P(id=f'dipreport_{bp.botid}')),
-    dcc.Graph(id=f'dipgraph_{bp.botid}'),
+    dcc.Graph(id=f'dipgraph_{bp.botid}', config=dccgraph_config),
     dash_inputbuilder({
         'inputtype': 'table',
         'id': f"dipchart_{bp.botid}"
@@ -185,10 +185,10 @@ def gen_dipgraph(hovermode, dipchartsource):
     if dipchartsource:
         df = pd.DataFrame.from_records(dipchartsource)
         yaxes = [i for i in df.columns[1:] if i not in ['pctdrops', 'lowestprice']]
-        fig = px.line(df, x='date', y=yaxes, markers=False)
+        fig = px.line(df, x='date', y=yaxes, markers=False, template=figure_layout_mastertemplate)
 
     else:
-        fig = px.line(pd.DataFrame(data=[0]))
-    fig.update_layout(transition_duration=500, yaxis_title="$", legend_title_text='Ticker', hovermode=hovermode)
+        fig = px.line(pd.DataFrame(data=[0]), template=figure_layout_mastertemplate)
+    fig.update_layout(yaxis_title="$", legend_title_text='Ticker', hovermode=hovermode)
     fig.update_traces(hovertemplate='date=%{x|%Y-%m-%d}<br>value=%{y}')
     return fig

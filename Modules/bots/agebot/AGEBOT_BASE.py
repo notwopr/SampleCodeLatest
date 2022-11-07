@@ -104,6 +104,7 @@ def agebotmaster(global_params):
         alltrialexistdates = getrandomexistdate_multiple(global_params['num_trials'], global_params['firstdate'], global_params['latestdate'], global_params['testlen'], daterangedb_source)
     # load price matrices into RAM
     pricematrixdf = readpkl('allpricematrix_common', PRICES)
+    pricematrixdf.ffill(inplace=True)
     # run multitrial processor
     trialdumpparent = buildfolders_singlechild(testrunparent, 'trialdumpparent')
     targetvars = (trialdumpparent, pricematrixdf, global_params['testlen'], global_params['rank_beg'], global_params['rank_end'], global_params['gr_u'], global_params['gr_l'], global_params['dir_u'], global_params['dir_l'])

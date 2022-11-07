@@ -8,16 +8,25 @@ dccgraph_config = {
     'doubleClick': 'autosize',
     'displaylogo': False,
     }
-dccgraph_animationoptions = {
-    'frame': {
-        'redraw': False
-        }
-}
+
+'''FIGURE SETTINGS'''
+
+'''FIGURE_LAYOUT SETTINGS'''
 '''
 built-in templates
-['ggplot2', 'seaborn', 'simple_white', 'plotly',
-         'plotly_white', 'plotly_dark', 'presentation', 'xgridoff',
-         'ygridoff', 'gridon', 'none']
+[
+    'ggplot2',
+    'seaborn',
+    'simple_white',
+    'plotly',
+    'plotly_white',
+    'plotly_dark',
+    'presentation',
+    'xgridoff',
+    'ygridoff',
+    'gridon',
+    'none'
+]
 '''
 pio.templates["global"] = go.layout.Template(
     layout={

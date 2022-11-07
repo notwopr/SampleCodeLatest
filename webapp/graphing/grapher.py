@@ -5,6 +5,7 @@ from dash import dcc, html
 #   LOCAL APPLICATION IMPORTS
 from formatting import format_tabs
 from ..dashinputs import gen_tablecontents, dash_inputbuilder
+from formatting_graphs import dccgraph_config
 
 
 class GraphAssets:
@@ -148,14 +149,14 @@ class GraphAssets:
             html.Span(id=f"dfcol_{bp.botid}", hidden='hidden'),
             html.Br(),
             dcc.Tabs([
-                dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs)), label='Price History'),
+                dcc.Tab(html.Div(dcc.Graph(id=f"perf_graph_{bp.botid}", className=format_tabs, config=dccgraph_config)), label='Price History'),
                 dcc.Tab(html.Div([
                     html.Table(gen_tablecontents(self.pdiffsettings)),
-                    dcc.Graph(id=f"graphdiff_{bp.botid}")
+                    dcc.Graph(id=f"graphdiff_{bp.botid}", config=dccgraph_config)
                     ], className=format_tabs), label='Periodic Change'),
                 dcc.Tab(html.Div([
                     html.Table(gen_tablecontents(self.compsettings)),
-                    dcc.Graph(id=f"graphcomp_{bp.botid}")
+                    dcc.Graph(id=f"graphcomp_{bp.botid}", config=dccgraph_config)
                     ], className=format_tabs), label='Comparative'),
                 dcc.Tab(label='Volatility Metrics', children=[
                     html.Div([

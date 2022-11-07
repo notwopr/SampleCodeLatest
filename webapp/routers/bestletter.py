@@ -25,7 +25,7 @@ from ..datatables import DataTableOperations
 from Modules.timeperiodbot import random_dates
 from ..common_resources import staticmindate, staticmaxdate
 from formatting import format_tabs
-
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -77,8 +77,8 @@ layout = html.Div([
                     'value': 'closest',
                     'inline': 'inline'
                     }),
-                dcc.Graph(id=f'output_{bp.botid}'),
-                dcc.Graph(id=f'output_pie_{bp.botid}')
+                dcc.Graph(id=f'output_{bp.botid}', config=dccgraph_config),
+                dcc.Graph(id=f'output_pie_{bp.botid}', config=dccgraph_config)
             ], className=format_tabs), label='Visuals')
     ])
 
@@ -122,7 +122,7 @@ def calc_bestletter(n_clicks, date, dfdata, sort_by):
 def gen_graph(dfdata, hovermode):
     if dfdata:
         df = pd.DataFrame.from_records(dfdata)
-        bar_y = df.columns[1:]
+        bar_y = [i for i in df.columns[1:] if not i.startswith('Number of Tickers') and not i.startswith('% of Total')]
         bar_x = pie_names = 'First Letter'
         pie_values = df.columns[1]
     else:
@@ -130,7 +130,7 @@ def gen_graph(dfdata, hovermode):
         bar_x = pie_names = 0
         bar_y = []
         pie_values = df.columns
-    pie_fig = px.pie(df, names=pie_names, values=pie_values)
-    fig = px.bar(df, x=bar_x, y=bar_y, barmode='group')
-    fig.update_layout(transition_duration=500, hovermode=hovermode)
+    pie_fig = px.pie(df, names=pie_names, values=pie_values, template=figure_layout_mastertemplate)
+    fig = px.bar(df, x=bar_x, y=bar_y, barmode='group', template=figure_layout_mastertemplate)
+    fig.update_layout(hovermode=hovermode)
     return fig, pie_fig

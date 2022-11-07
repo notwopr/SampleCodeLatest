@@ -1,12 +1,13 @@
 import pandas as pd
 import plotly.express as px
 from webapp.routers.strat_ranker_2_helper_cols import scattercols, profilecols, abovecols
+from formatting_graphs import figure_layout_mastertemplate
 
 
 class StratRankerGrapher:
     def _format_fig(self, fig, hovermode):
         fig.update_xaxes(categoryorder='category ascending', ticklabeloverflow='allow', automargin=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Legend', hovermode=hovermode, uirevision='some-constant')
+        fig.update_layout(legend_title_text='Legend', hovermode=hovermode)
 
     def _prep_bdf(self, bdf, mode):
         colnames = ['stratipcode']
@@ -23,12 +24,12 @@ class StratRankerGrapher:
         bdf = self._prep_bdf(bdf, 'scatter')
         df = pd.melt(bdf, id_vars="stratipcode", value_vars=bdf.columns[1:], var_name='metric', value_name='value')
         if chart_type == 'Scatter':
-            fig = px.scatter(df, x="stratipcode", y="value", color="metric")
+            fig = px.scatter(df, x="stratipcode", y="value", color="metric", template=figure_layout_mastertemplate)
             fig.update_traces(marker=dict(size=12, opacity=0.5))
         elif chart_type == 'Box':
-            fig = px.box(df, x="stratipcode", y="value", color="metric", boxmode="overlay")
+            fig = px.box(df, x="stratipcode", y="value", color="metric", boxmode="overlay", template=figure_layout_mastertemplate)
         elif chart_type == 'Violin':
-            fig = px.violin(df, x="stratipcode", y="value", color="metric", violinmode="overlay")
+            fig = px.violin(df, x="stratipcode", y="value", color="metric", violinmode="overlay", template=figure_layout_mastertemplate)
         fig.update_yaxes(matches=None)
         fig.add_hline(
             y=0,
@@ -44,7 +45,7 @@ class StratRankerGrapher:
         bdf = bdf.groupby(by=["stratipcode"], dropna=False, as_index=False).mean(numeric_only=True)
         bar_y = bdf.columns[1:]
         bar_x = 'stratipcode'
-        fig = px.bar(bdf, x=bar_x, y=bar_y, barmode='group')
+        fig = px.bar(bdf, x=bar_x, y=bar_y, barmode='group', template=figure_layout_mastertemplate)
         self._format_fig(fig, hovermode)
         return fig
 
@@ -53,6 +54,6 @@ class StratRankerGrapher:
         bdf = bdf.groupby(by=["stratipcode"], dropna=False, as_index=False).mean(numeric_only=True)
         bar_y = bdf.columns[1:]
         bar_x = 'stratipcode'
-        fig = px.bar(bdf, x=bar_x, y=bar_y, barmode='group')
+        fig = px.bar(bdf, x=bar_x, y=bar_y, barmode='group', template=figure_layout_mastertemplate)
         self._format_fig(fig, hovermode)
         return fig

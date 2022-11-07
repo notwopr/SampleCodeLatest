@@ -48,10 +48,11 @@ from webapp.ranking_helper import gen_rankconfig_htmlchildren
 from formatting import format_tabs
 from file_hierarchy import DirPaths
 from machinesettings import _machine
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
-    'Strategy Tester',
+    html.Del('Strategy Tester (Deprecated)'),
     "Given a stock screening strategy, report how your portfolio would perform if you use the strategy for a given date range.",
     None
 )
@@ -160,7 +161,7 @@ layout = html.Div([
         dcc.Tab(label='Performance by Period', id=f'periodreports_{bp.botid}', className=format_tabs),
         dcc.Tab(label='Visuals', children=[
             html.Div([
-                dcc.Graph(id=f"overallstats_{bp.botid}"),
+                dcc.Graph(id=f"overallstats_{bp.botid}", config=dccgraph_config),
                 dash_inputbuilder({
                     'id': f'hovermode_{bp.botid}',
                     'prompt': 'Choose how you want to display data when you hover over the graph.',
@@ -416,11 +417,11 @@ def run_strattester(n_clicks, strat, period, num_periods, start_date, min_age, b
 def sort_rawdatatable(sourcetable, hovermode):
     allperiodstatdf = pd.DataFrame.from_records(sourcetable)
     if len(allperiodstatdf.columns) > 1:
-        fig = px.line(allperiodstatdf, x='holdingperiod', y=allperiodstatdf.columns[8:], markers=False)
-        fig.update_layout(transition_duration=500, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
+        fig = px.line(allperiodstatdf, x='holdingperiod', y=allperiodstatdf.columns[8:], markers=False, template=figure_layout_mastertemplate)
+        fig.update_layout(legend_title_text='Ticker', hovermode=hovermode)
         hidetoggle = None
     else:
-        fig = px.line([0])
+        fig = px.line([0], template=figure_layout_mastertemplate)
         hidetoggle = 'hidden'
     return fig, hidetoggle
 

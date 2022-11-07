@@ -23,12 +23,13 @@ from Modules.price_history import grabsinglehistory
 from file_functions import delete_folder, getbotsinglerunfolder
 from ..os_functions import get_currentscript_filename
 from ..common_resources import tickers
-from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
+from ..dashinputs import gen_tablecontents, dash_inputbuilder
 from ..botrun_parambuilder import brpb_base
 from ..datatables import DataTableOperations
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
 from formatting import format_tabs
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 
 bp = BotParams(
@@ -207,9 +208,9 @@ def get_priceheatmap(n_clicks, ticker, beg_date, end_date, timechunk_preset, tim
             y=heatmapdf['YEAR'],
             text_auto=True,
             aspect="auto",
-            height=700)
-        fig.update_layout(transition_duration=500, autosize=True)
-        return dcc.Graph(figure=fig), heatmapdf.to_dict('records')
+            height=700, template=figure_layout_mastertemplate)
+        fig.update_layout(autosize=True)
+        return dcc.Graph(figure=fig, config=dccgraph_config), heatmapdf.to_dict('records')
     else:
         return None, None
 

@@ -231,6 +231,6 @@ def gen_graph(dfsource, hovermode, dbchoice, calibmode):
     else:
         yaxislabel = '%'
         legendtitle = None
-        fig = px.line(pd.DataFrame(data=[0]))
+        fig = px.line(pd.DataFrame(data=[0]), template=figure_layout_mastertemplate)
     fig.update_layout(yaxis_title=yaxislabel, legend_title_text=legendtitle, hovermode=hovermode)
     return fig, modeoptions

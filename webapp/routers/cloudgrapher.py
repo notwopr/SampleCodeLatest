@@ -30,6 +30,7 @@ from newbacktest.symbology.cloudsampcode import CloudSampCode
 from newbacktest.cloudgrapher.db_cloudsample import CloudSampleDatabase
 from .cloudgrapher_helper import aggregate_sipcols, gen_clouddf_single
 from formatting import format_tabs
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -107,7 +108,7 @@ layout = html.Div([
     html.Br(),
     html.Br(),
     dcc.Tabs([
-        dcc.Tab(html.Div(dcc.Graph(id=f"cloudgraph_{bp.botid}"), className=format_tabs), label='Cloud Graph'),
+        dcc.Tab(html.Div(dcc.Graph(id=f"cloudgraph_{bp.botid}", config=dccgraph_config), className=format_tabs), label='Cloud Graph'),
         dcc.Tab(html.Div(dash_inputbuilder({
                 'inputtype': 'table',
                 'id': f"codechart_{bp.botid}"
@@ -217,13 +218,13 @@ def gen_cloudgraph(cloudchartsource, stake, hovermode):
     if cloudchartsource:
         df = pd.DataFrame.from_records(cloudchartsource)
         yaxes = [i for i in df.columns if not i.endswith('date')]
-        fig = px.line(df, x='Days Invested', y=yaxes, markers=False)
+        fig = px.line(df, x='Days Invested', y=yaxes, markers=False, template=figure_layout_mastertemplate)
 
     else:
-        fig = px.line(pd.DataFrame(data=[0]))
+        fig = px.line(pd.DataFrame(data=[0]), template=figure_layout_mastertemplate)
     yaxis = '%'
     if stake:
         yaxis = '$'
-    fig.update_layout(transition_duration=500, yaxis_title=yaxis, legend_title_text='Ticker', hovermode=hovermode, uirevision='some-constant')
+    fig.update_layout(yaxis_title=yaxis, legend_title_text='Ticker', hovermode=hovermode)
     fig.update_traces(connectgaps=True)
     return fig

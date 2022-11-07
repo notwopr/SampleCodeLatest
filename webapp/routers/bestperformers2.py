@@ -38,6 +38,7 @@ from .bestperformers2_helper_inputs import BestPerformerInputs
 from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
 from ..graphing.grapher_helper_volstats import VolStatFunctions
+from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
 
 bp = BotParams(
     get_currentscript_filename(__file__),
@@ -104,13 +105,13 @@ layout = html.Div([
                 'value': 'closest',
                 'inline': 'inline'
                 }),
-            dcc.Graph(id=f"fullranking_graph_{bp.botid}")
+            dcc.Graph(id=f"fullranking_graph_{bp.botid}", config=dccgraph_config)
         ], className=format_tabs), label='Ranking Graph'),
         dcc.Tab(html.Div(GraphAssets(bp).perfgraphtab, className=format_tabs), label='Performance Graph'),
-        dcc.Tab(html.Div(dash_inputbuilder({
-            'inputtype': 'table',
-            'id': f"sourcetable_{bp.botid}"
-            }), className=format_tabs), label='Raw Data')
+        # dcc.Tab(html.Div(dash_inputbuilder({
+        #     'inputtype': 'table',
+        #     'id': f"sourcetable_{bp.botid}"
+        #     }), className=format_tabs), label='Raw Data')
         ]),
     html.Div(dash_inputbuilder({
         'inputtype': 'table',
@@ -658,10 +659,10 @@ def gen_fullrankgraph(dfdata, hovermode):
         xaxis = 'stock'
         yaxes = [i for i in botdf.columns if i != 'STOCK']
         yaxislabel = 'metricvalue'
-        fig = px.bar(botdf, x=xaxis, y=yaxes)
-        fig.update_layout(transition_duration=500, legend_title_text='Attribute', hovermode=hovermode, uirevision='some-constant', yaxis_title=yaxislabel)
+        fig = px.bar(botdf, x=xaxis, y=yaxes, template=figure_layout_mastertemplate)
+        fig.update_layout(legend_title_text='Attribute', hovermode=hovermode, yaxis_title=yaxislabel)
     else:
-        fig = px.line([0])
+        fig = px.line([0], template=figure_layout_mastertemplate)
     return fig
 
 
