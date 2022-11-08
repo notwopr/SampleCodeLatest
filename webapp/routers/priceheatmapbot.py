@@ -16,6 +16,7 @@ from dash.dependencies import Input, Output, State
 from dashappobject import app
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
 #   LOCAL APPLICATION IMPORTS
 from ..botclasses import BotParams
 from Modules.bots.bpoty.BPOTYBOT_BASE import get_poty_average
@@ -91,8 +92,21 @@ layout = html.Div([
         html.Div(id=f'preview_{bp.botid}')
     ], id=f'input_{bp.botid}'),
     dcc.Tabs([
-        dcc.Tab(label='Price Change Heat Map', id=f'output_{bp.botid}', className=format_tabs),
         dcc.Tab(html.Div([
+            html.Span([html.B('Select Graph Type:')]),
+            dash_inputbuilder({
+                'id': f'graphtype_{bp.botid}',
+                'prompt': 'Select Graph Type:',
+                'inputtype': 'radio',
+                'options': ['2-D', '3-D'],
+                'value': '2-D',
+                'inline': 'inline'
+                }),
+            html.Br(),
+            dcc.Graph(config=dccgraph_config, id=f'heatmapgraph_{bp.botid}')
+        ], className=format_tabs), label='Price Change Heat Map'),
+        dcc.Tab(html.Div([
+            html.Span([html.B('Select type of average:')]),
             dash_inputbuilder({
                 'id': f'average_{bp.botid}',
                 'prompt': 'Select type of average.',
@@ -105,26 +119,18 @@ layout = html.Div([
                 'inputtype': 'table',
                 'id': f"chunkranktable_{bp.botid}"
                 })
-            ], className=format_tabs), label='Time Chunk Ranking')
+            ], className=format_tabs), label='Time Chunk Ranking'),
+        dcc.Tab(html.Div(
+            dash_inputbuilder({
+                'inputtype': 'table',
+                'id': f'rawdata_{bp.botid}'
+                }), className=format_tabs), label='Raw Data')
     ]),
     html.Div(dash_inputbuilder({
         'inputtype': 'table',
         'id': f"chunkranksource_{bp.botid}"
         }), hidden='hidden')
 ])
-
-'''
-@app.callback(
-    Output(f'datepicker_{bp.botid}', "min_date_allowed"),
-    Output(f'datepicker_{bp.botid}', "max_date_allowed"),
-    Input(f'ticker_{bp.botid}', "value"))
-def get_minmaxdates(ticker):
-    if ticker:
-        df = grabsinglehistory(ticker)
-        return df['date'].min(), df['date'].max()
-    else:
-        return None, None
-'''
 
 
 # update min and max dates and randomize dates if requested
@@ -183,7 +189,6 @@ def preview_inputs(n_clicks, ticker, beg_date, end_date, timechunk_preset, timec
 
 
 @app.callback(
-    Output(f'output_{bp.botid}', 'children'),
     Output(f'chunkranksource_{bp.botid}', 'data'),
     Input(f'submitbutton_{bp.botid}', 'n_clicks'),
     State(f'ticker_{bp.botid}', "value"),
@@ -204,6 +209,31 @@ def get_priceheatmap(n_clicks, ticker, beg_date, end_date, timechunk_preset, tim
         heatmapdf = get_poty_average(brp)
         # delete temp files and folder
         delete_folder(getbotsinglerunfolder(brp['rootdir'], brp['testregimename'], brp['todaysdate'], brp['testnumber']))
+    else:
+        heatmapdf = pd.DataFrame(data={'Time Chunk': [0], 'YEAR': [0], 'Price Change': [0]})
+    return heatmapdf.to_dict('records')
+
+
+# sort raw data table
+@app.callback(
+    Output(f"rawdata_{bp.botid}", "data"),
+    Input(f"rawdata_{bp.botid}", 'sort_by'),
+    Input(f"rawdata_{bp.botid}", "data"),
+    Input(f"chunkranksource_{bp.botid}", "data")
+    )
+def sort_rawdatatable(sort_by, rawdatatable, sourcetable):
+    return DataTableOperations().return_sortedtable(sort_by, callback_context, rawdatatable, sourcetable).to_dict('records')
+
+
+# generate figure depending on type
+@app.callback(
+    Output(f'heatmapgraph_{bp.botid}', 'figure'),
+    Input(f'chunkranksource_{bp.botid}', 'data'),
+    Input(f"graphtype_{bp.botid}", "value")
+    )
+def gen_heatmapgraph(heatmapsource, graphtype):
+    heatmapdf = pd.DataFrame.from_records(heatmapsource)
+    if graphtype == '2-D':
         fig = px.imshow(
             heatmapdf[heatmapdf.columns[1:]],
             labels=dict(x="Time Chunk", y="Year", color="Price Change"),
@@ -211,10 +241,18 @@ def get_priceheatmap(n_clicks, ticker, beg_date, end_date, timechunk_preset, tim
             text_auto=True,
             aspect="auto",
             height=700, template=figure_layout_mastertemplate)
-        fig.update_layout(autosize=True)
-        return dcc.Graph(figure=fig, config=dccgraph_config), heatmapdf.to_dict('records')
-    else:
-        return None, None
+    elif graphtype == '3-D':
+        z = heatmapdf[heatmapdf.columns[1:]]
+        sh_0, sh_1 = z.shape
+        x, y = heatmapdf.columns[1:], heatmapdf['YEAR']
+        fig = go.Figure(
+            data=[go.Surface(z=z, x=x, y=y)],
+            layout=go.Layout(
+                height=700,
+                template=figure_layout_mastertemplate
+                ))
+    fig.update_layout(autosize=True)
+    return fig
 
 
 # show days text input if day radio selected
