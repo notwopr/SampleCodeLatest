@@ -1,2 +1,2 @@
-# PROJECT BELUGA
-This is private work, and may not be licensed out to anyone.  I, David Choi, the sole author and owner of this repository and code is the sole possessor and owner of all copyrights and exclusive licensee and licensor of any and all licenses derived from this repository and code.
+# SAMPLE CODE
+This repo contains portions of the code I use to run my sample web app found at http://projectupandup.one Warning: you cannot run the app off of this repo because I removed some dependencies for security purposes. LICENSE INFO: This code is only for viewing and may not be used or distributed for commercial purposes.
