@@ -22,7 +22,10 @@ from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
 from ..botclasses import BotParams
 from Modules.referencetools.statresearch.trialnumbot import num_trial_bot, num_trial_bot_report
 from ..os_functions import get_currentscript_filename
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+from formatting import formatting_schema
+
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

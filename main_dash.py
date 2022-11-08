@@ -22,11 +22,22 @@ from webapp.router_directory import retrieve_bot_content, bpdict
 from webapp.html_dash import gen_htmltable, gen_trlist_from_dict_footer
 from file_functions import readpkl
 from webapp.dashinputs import dash_inputbuilder
-from formatting import format_loginbody, format_loginbody_elements, format_footer, format_main, format_top, format_navbar, format_banner, format_heading_txt, formaltextinput, format_logincopyright, format_stats_livestatus
+from formatting import formatting_schema
 from file_hierarchy import DirPaths
 from machinesettings import _machine
 from webapp.colors import ColorGenerator
 
+format_loginbody = formatting_schema['format_loginbody']
+format_loginbody_elements = formatting_schema['format_loginbody_elements']
+format_footer = formatting_schema['format_success_global']
+format_main = formatting_schema['format_success_global']
+format_top = formatting_schema['format_success_global']
+format_navbar = formatting_schema['format_navbar']
+format_banner = formatting_schema['format_banner']
+format_heading_txt = formatting_schema['format_heading_txt']
+formaltextinput = formatting_schema['formaltextinput']
+format_logincopyright = formatting_schema['format_logincopyright']
+format_stats_livestatus = formatting_schema['format_stats_livestatus']
 
 coname = 'climb.'
 

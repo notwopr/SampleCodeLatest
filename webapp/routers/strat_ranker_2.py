@@ -23,18 +23,22 @@ from ..botclasses import BotParams
 from ..os_functions import get_currentscript_filename
 from ..dashinputs import dash_inputbuilder
 from ..datatables import DataTableOperations
-from formatting import format_tabs
+from formatting import formatting_schema
 from newbacktest.perfmetrics.perfmetrics_perfprofileupdater import PerfProfileUpdater
 from newbacktest.perfmetrics.perfmetrics_ranker_schemas import rank_schemas
 from newbacktest.perfmetrics.perfmetrics_ranker import PerfMetricRanker
 from webapp.servernotes import getlastmodified
 from file_hierarchy import DirPaths, FileNames
 from file_functions import readpkl, join_str
-from formatting import helpful_note_value, helpful_note_key
 from webapp.routers.strat_ranker_2_helper_grapher import StratRankerGrapher
 from webapp.routers.strat_ranker_2_helper_stakefigures import StakeFigures
 from machinesettings import _machine
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+
+format_tabs = formatting_schema['format_tabs']
+helpful_note_value = formatting_schema['helpful_note_value']
+helpful_note_key = formatting_schema['helpful_note_key']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

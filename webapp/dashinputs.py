@@ -1,6 +1,16 @@
 from dash import dcc, html, dash_table
 from webapp.regex import wordorwords_singlespaced
-from formatting import buttonclass, textinputboxes, format_htmltable_leftcols, format_htmltable_rightcols, format_dropdown, format_radio_button, format_radio_label, format_checklist_boxes, format_checklist_label
+from formatting import formatting_schema
+
+buttonclass = formatting_schema['buttonclass']
+textinputboxes = formatting_schema['textinputboxes']
+format_htmltable_leftcols = formatting_schema['format_htmltable_leftcols']
+format_htmltable_rightcols = formatting_schema['format_htmltable_rightcols']
+format_dropdown = formatting_schema['format_dropdown']
+format_radio_button = formatting_schema['format_radio_button']
+format_radio_label = formatting_schema['format_radio_label']
+format_checklist_boxes = formatting_schema['format_checklist_boxes']
+format_checklist_label = formatting_schema['format_checklist_label']
 
 
 def dash_inputbuilder(c):

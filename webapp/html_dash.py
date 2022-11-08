@@ -1,5 +1,8 @@
 from dash import html
-from formatting import format_stats_leftcols, format_stats_rightcols
+from formatting import formatting_schema
+
+format_stats_leftcols = formatting_schema['format_stats_leftcols']
+format_stats_rightcols = formatting_schema['format_stats_rightcols']
 
 
 # where row input is a key, value pair

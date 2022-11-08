@@ -33,12 +33,16 @@ from ..os_functions import get_currentscript_filename
 from ..datatables import DataTableOperations
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
-from formatting import format_htmltable_row, format_tabs
+from formatting import formatting_schema
 from .bestperformers2_helper_inputs import BestPerformerInputs
 from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
 from ..graphing.grapher_helper_volstats import VolStatFunctions
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+
+format_htmltable_row = formatting_schema['format_htmltable_row']
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

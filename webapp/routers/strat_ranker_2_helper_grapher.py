@@ -1,7 +1,9 @@
 import pandas as pd
 import plotly.express as px
 from webapp.routers.strat_ranker_2_helper_cols import scattercols, profilecols, abovecols
-from formatting_graphs import figure_layout_mastertemplate
+from formatting import formatting_schema
+
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 
 class StratRankerGrapher:

@@ -45,10 +45,13 @@ from Modules.ranking_functions import gen_ranking
 from Modules.tickerportalbot import tickerportal2
 from webapp.routers.strattester_helper_leaderboard_colconfig import nonrankcols, colconfig_1
 from webapp.ranking_helper import gen_rankconfig_htmlchildren
-from formatting import format_tabs
+from formatting import formatting_schema
 from file_hierarchy import DirPaths
 from machinesettings import _machine
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

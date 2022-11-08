@@ -27,7 +27,10 @@ from ..dashinputs import prompt_builder, gen_tablecontents, dash_inputbuilder
 from ..datatables import DataTableOperations
 from Modules.dates import DateOperations
 from Modules.timeperiodbot import random_dates
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+from formatting import formatting_schema
+
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

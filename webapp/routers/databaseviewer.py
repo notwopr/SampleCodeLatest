@@ -22,9 +22,12 @@ from ..os_functions import get_currentscript_filename
 from ..dashinputs import dash_inputbuilder
 from newbacktest.module_operations import ModuleOperations
 from ..html_json import jsontodash, remove_nonrenderables
-from formatting import format_tabs
+from formatting import formatting_schema
 from newbacktest.cloudgrapher.cloudgrapher_data import CloudGrapherData
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

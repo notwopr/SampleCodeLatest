@@ -24,11 +24,14 @@ from .strattester_helper_leaderboard import gen_leaderboard
 from ..datatables import DataTableOperations
 from Modules.ranking_functions import gen_ranking
 from webapp.routers.strattester_helper_leaderboard_colconfig import quality_cols
-from formatting import format_tabs
+from formatting import formatting_schema
 from Modules.dataframe_functions import join_matrices
 from Modules.numbers import twodecp
 from Modules.numbers_formulas import func_ending_principal
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

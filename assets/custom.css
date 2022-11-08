@@ -89,6 +89,7 @@ html, body {
 .font_logincopyright {
   font-family: 'Bayon', sans-serif;
 }
+
 .longchecklist {
   column-count: 3;
   column-fill: auto;

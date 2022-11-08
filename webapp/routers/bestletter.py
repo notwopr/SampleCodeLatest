@@ -24,8 +24,12 @@ from ..os_functions import get_currentscript_filename
 from ..datatables import DataTableOperations
 from Modules.timeperiodbot import random_dates
 from ..common_resources import staticmindate, staticmaxdate
-from formatting import format_tabs
-from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+# from formatting_graphs import dccgraph_config, figure_layout_mastertemplate
+from formatting import formatting_schema
+
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

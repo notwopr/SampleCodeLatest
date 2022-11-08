@@ -23,7 +23,7 @@ from ..dashinputs import gen_tablecontents, prompt_builder, dash_inputbuilder
 from ..datatables import DataTableOperations
 from ..common_resources import staticmindate, staticmaxdate
 from Modules.timeperiodbot import random_dates
-from formatting import format_tabs
+from formatting import formatting_schema
 from webapp.servernotes import get_minmaxdates
 from newbacktest.stratpools.db_stratpool import StratPoolDatabase
 from newbacktest.baking.baker_stratpool import Baker
@@ -31,6 +31,8 @@ from ..graphing.grapher import GraphAssets
 from ..graphing.grapher_helper_functions import GrapherHelperFunctions
 from ..graphing.grapher_helper_volstats import VolStatFunctions
 from machinesettings import _machine
+
+format_tabs = formatting_schema['format_tabs']
 
 bp = BotParams(
     get_currentscript_filename(__file__),

@@ -12,7 +12,9 @@ from newbacktest.datasource_single import DataSourceSingle
 from newbacktest.curvecalibrator import CurveCalibrator
 from webapp.servernotes import get_ipodate
 from globalvars import benchmarks as benchmarksinfo
-from formatting_graphs import figure_layout_mastertemplate
+from formatting import formatting_schema
+
+figure_layout_mastertemplate = formatting_schema['figure_layout_mastertemplate']
 
 
 class GrapherHelperFunctions:

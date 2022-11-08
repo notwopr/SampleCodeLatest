@@ -24,11 +24,13 @@ from Modules.updatepricedata.UPDATESTOCKDATA import updatestockdata
 from Modules.dates_alpaca import getmostrecenttradingdate
 from ..os_functions import get_currentscript_filename
 from ..datatables import DataTableOperations
-from formatting import format_tabs
+from formatting import formatting_schema
 from file_functions import readpkl
 from file_hierarchy import DirPaths, FileNames
 from webapp.servernotes import getlastmodified
 from machinesettings import _machine
+
+format_tabs = formatting_schema['format_tabs']
 
 FULL_INFO_DB = Path(DirPaths().full_info_db)
 daterangedb_name = FileNames().fn_daterangedb

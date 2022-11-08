@@ -3,9 +3,11 @@
 #   THIRD PARTY IMPORTS
 from dash import dcc, html
 #   LOCAL APPLICATION IMPORTS
-from formatting import format_tabs
+from formatting import formatting_schema
 from ..dashinputs import gen_tablecontents, dash_inputbuilder
-from formatting_graphs import dccgraph_config
+
+format_tabs = formatting_schema['format_tabs']
+dccgraph_config = formatting_schema['dccgraph_config']
 
 
 class GraphAssets:
